@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package card.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/klaital/cardsorter/backend/gen/protos;cardv1";
+
+service CardService {
+  // CreateCard creates a new card in a library
+  rpc CreateCard(CreateCardRequest) returns (CreateCardResponse) {
+    option (google.api.http) = {
+      post: "/v1/libraries/{library_id}/cards"
+      body: "*"
+    };
+  }
+
+  // GetCards retrieves all cards in a library
+  rpc GetCards(GetCardsRequest) returns (GetCardsResponse) {
+    option (google.api.http) = {
+      get: "/v1/libraries/{library_id}/cards"
+    };
+  }
+
+  // GetCard retrieves a specific card
+  rpc GetCard(GetCardRequest) returns (GetCardResponse) {
+    option (google.api.http) = {
+      get: "/v1/libraries/{library_id}/cards/{card_id}"
+    };
+  }
+
+  // MoveCard moves a card to a different library
+  rpc MoveCard(MoveCardRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/libraries/{library_id}/cards/{card_id}/move"
+      body: "*"
+    };
+  }
+
+  // DeleteCard removes a card from a library
+  rpc DeleteCard(DeleteCardRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/libraries/{library_id}/cards/{card_id}"
+    };
+  }
+}
+
+message Card {
+  int64 id = 1;
+  int64 library_id = 2;
+  string name = 3;
+  string set_name = 4;
+  string condition = 5;
+  bool foil = 6;
+  string collector_number = 7;
+  int32 usd_price = 8;
+}
+
+message CreateCardRequest {
+  int64 library_id = 1;
+  string name = 2;
+  string set_name = 3;
+  string condition = 4;
+  bool foil = 5;
+  string collector_number = 6;
+  int32 usd_price = 7;
+}
+
+message CreateCardResponse {
+  Card card = 1;
+}
+
+message GetCardsRequest {
+  int64 library_id = 1;
+}
+
+message GetCardsResponse {
+  repeated Card cards = 1;
+}
+
+message GetCardRequest {
+  int64 library_id = 1;
+  int64 card_id = 2;
+}
+
+message GetCardResponse {
+  Card card = 1;
+}
+
+message MoveCardRequest {
+  int64 library_id = 1;
+  int64 card_id = 2;
+}
+
+message DeleteCardRequest {
+  int64 library_id = 1;
+  int64 card_id = 2;
+}

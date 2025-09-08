@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/klaital/cardsorter/backend/internal/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"log"
 	"log/slog"
 	"net"
 	"net/http"
@@ -20,16 +20,27 @@ import (
 )
 
 func main() {
-	// In production, use environment variables for these values
-	db, err := sql.Open("mysql", "af_gil:&jMEa6xYlLVLRApdFgIfJ@tcp(mysql.abandonedfactory.net:3306)/gilgamesh_test?parseTime=true")
+	cfg := config.ParseEnv()
+	db, err := sql.Open("mysql", cfg.MysqlDbString())
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Failed to connect to database", "err", err)
+		os.Exit(1)
 	}
 	defer db.Close()
-
 	if err := db.Ping(); err != nil {
-		log.Fatal(err)
+		slog.Error("failed the initial db ping", "err", err)
+		// TODO: should we wait/retry here? Do we ever wait for the db to be created?
+		os.Exit(1)
 	}
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(server.AuthInterceptor),
+	)
+
+	// Register all services
+	pb.RegisterLibraryServiceServer(grpcServer, server.NewLibraryServer(db))
+	pb.RegisterUserServiceServer(grpcServer, server.NewUserServer(db))
+	pb.RegisterCardServiceServer(grpcServer, server.NewCardServer(db))
 
 	//router := api.NewRouter(db)
 
@@ -40,13 +51,6 @@ func main() {
 
 	//log.Printf("Server starting on port %s", port)
 	//log.Fatal(http.ListenAndServe(":"+port, router))
-
-	// Create a gRPC server
-	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(server.AuthInterceptor),
-	)
-	libraryServer := server.NewLibraryServer(db)
-	pb.RegisterLibraryServiceServer(grpcServer, libraryServer)
 
 	// Start gRPC server
 	lis, _ := net.Listen("tcp", ":9090")

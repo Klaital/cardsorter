@@ -65,7 +65,7 @@ func (s *LibraryServer) GetLibraries(ctx context.Context, req *pb.GetLibrariesRe
 		response.Libraries = append(response.Libraries, &pb.Library{
 			Id:     lib.ID,
 			Name:   lib.Name,
-			UserId: lib.UserID,
+			UserId: userID,
 		})
 	}
 
@@ -118,16 +118,4 @@ func (s *LibraryServer) DeleteLibrary(ctx context.Context, req *pb.DeleteLibrary
 	}
 
 	return &emptypb.Empty{}, nil
-}
-
-// Helper function to get user ID from context
-func getUserIDFromContext(ctx context.Context) (int64, error) {
-	// This implementation will depend on how you're storing the user ID in the context
-	// You might want to define your own context key type
-	type userIDKey struct{}
-
-	if userID, ok := ctx.Value(userIDKey{}).(int64); ok {
-		return userID, nil
-	}
-	return 0, status.Error(codes.Unauthenticated, "user ID not found in context")
 }

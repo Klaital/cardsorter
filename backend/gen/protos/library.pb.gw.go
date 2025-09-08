@@ -2,11 +2,11 @@
 // source: protos/library.proto
 
 /*
-Package libraryv1 is a reverse proxy.
+Package cardv1 is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package libraryv1
+package cardv1
 
 import (
 	"context"

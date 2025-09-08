@@ -6,7 +6,7 @@ package library.v1;
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
-option go_package = "github.com/klaital/cardsorter/backend/gen/protos;libraryv1";
+option go_package = "github.com/klaital/cardsorter/backend/gen/protos;cardv1";
 
 // Library service definition
 service LibraryService {

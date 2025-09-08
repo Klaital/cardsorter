@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: protos/library.proto
 
-package libraryv1
+package cardv1
 
 import (
 	context "context"

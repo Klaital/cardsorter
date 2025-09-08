@@ -10,6 +10,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type userIDKey struct{}
+
+// getUserIDFromContext is a helper function to get user ID from context
+func getUserIDFromContext(ctx context.Context) (int64, error) {
+	// This implementation will depend on how you're storing the user ID in the context
+	// You might want to define your own context key type
+
+	if userID, ok := ctx.Value(userIDKey{}).(int64); ok {
+		return userID, nil
+	}
+	return 0, status.Error(codes.Unauthenticated, "user ID not found in context")
+}
+
 func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
