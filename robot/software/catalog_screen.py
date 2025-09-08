@@ -1,6 +1,4 @@
 import json
-import io
-import os
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -10,6 +8,7 @@ from kivy.uix.image import Image
 from kivy.graphics.texture import Texture
 from PIL import Image as PILImage
 from kivy.clock import Clock
+from kivy.app import App
 
 # Try importing Picamera2 for Raspberry Pi camera support
 try:
@@ -23,6 +22,16 @@ class CatalogScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.layout = BoxLayout(orientation='vertical', spacing=10, padding=10)
+        
+        # Add library name label at the top
+        self.library_label = Label(
+            text="Library: None selected",
+            font_size=20,
+            size_hint=(1, 0.1),
+            halign='left'
+        )
+        self.library_label.bind(size=self.library_label.setter('text_size'))
+        self.layout.add_widget(self.library_label)
         
         # Initialize camera
         self.picam = None
@@ -160,3 +169,14 @@ class CatalogScreen(Screen):
         if self.picam:
             self.picam.stop()
         self.manager.current = "menu"
+
+    def on_enter(self):
+        """Called when screen is entered"""
+        app = App.get_running_app()
+        if app.selected_library_id:
+            try:
+                library = app.magic_client.get_library(app.selected_library_id)
+                self.library_label.text = f"Library: {library.name}"
+            except Exception as e:
+                print(f"Error fetching library details: {e}")
+                self.library_label.text = "Library: Error loading details"
