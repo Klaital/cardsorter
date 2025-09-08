@@ -11,8 +11,19 @@ INSERT INTO libraries (user_id, name)
 VALUES (?, ?);
 
 -- name: GetLibraries :many
-SELECT * FROM libraries
-WHERE user_id = ?;
+SELECT
+    l.id,
+    l.name,
+    COALESCE(SUM(c.usd), 0) as total_value
+FROM
+    libraries l
+        LEFT JOIN
+    cards c ON l.id = c.library_id
+WHERE l.user_id = ?
+GROUP BY
+    l.id, l.name
+ORDER BY
+    l.id;
 
 -- name: GetLibrary :one
 SELECT * FROM libraries
@@ -20,7 +31,7 @@ WHERE id = ? AND user_id = ?;
 
 -- name: DeleteLibrary :exec
 DELETE FROM libraries
-WHERE id = ? AND user_id = ?;
+WHERE id = ? AND user_id = ? LIMIT 1;
 
 -- name: CreateCard :execresult
 INSERT INTO cards (library_id, name, set_name, cnd, foil, collector_num, usd)

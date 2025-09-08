@@ -17,7 +17,7 @@ type Querier interface {
 	DeleteLibrary(ctx context.Context, arg DeleteLibraryParams) error
 	GetCard(ctx context.Context, id int64) (Card, error)
 	GetCards(ctx context.Context, libraryID int64) ([]Card, error)
-	GetLibraries(ctx context.Context, userID int64) ([]Library, error)
+	GetLibraries(ctx context.Context, userID int64) ([]GetLibrariesRow, error)
 	GetLibrary(ctx context.Context, arg GetLibraryParams) (Library, error)
 	GetUser(ctx context.Context, email string) (User, error)
 	MoveCard(ctx context.Context, arg MoveCardParams) error

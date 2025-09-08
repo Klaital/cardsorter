@@ -77,7 +77,7 @@ func (q *Queries) DeleteCard(ctx context.Context, id int64) error {
 
 const deleteLibrary = `-- name: DeleteLibrary :exec
 DELETE FROM libraries
-WHERE id = ? AND user_id = ?
+WHERE id = ? AND user_id = ? LIMIT 1
 `
 
 type DeleteLibraryParams struct {
@@ -153,26 +153,37 @@ func (q *Queries) GetCards(ctx context.Context, libraryID int64) ([]Card, error)
 }
 
 const getLibraries = `-- name: GetLibraries :many
-SELECT id, user_id, name, created_at, updated_at FROM libraries
-WHERE user_id = ?
+SELECT
+    l.id,
+    l.name,
+    COALESCE(SUM(c.usd), 0) as total_value
+FROM
+    libraries l
+        LEFT JOIN
+    cards c ON l.id = c.library_id
+WHERE l.user_id = ?
+GROUP BY
+    l.id, l.name
+ORDER BY
+    l.id
 `
 
-func (q *Queries) GetLibraries(ctx context.Context, userID int64) ([]Library, error) {
+type GetLibrariesRow struct {
+	ID         int64       `json:"id"`
+	Name       string      `json:"name"`
+	TotalValue interface{} `json:"total_value"`
+}
+
+func (q *Queries) GetLibraries(ctx context.Context, userID int64) ([]GetLibrariesRow, error) {
 	rows, err := q.query(ctx, q.getLibrariesStmt, getLibraries, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Library
+	var items []GetLibrariesRow
 	for rows.Next() {
-		var i Library
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.Name,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
+		var i GetLibrariesRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.TotalValue); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
