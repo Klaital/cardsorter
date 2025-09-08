@@ -1,0 +1,76 @@
+
+syntax = "proto3";
+
+package library.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/klaital/cardsorter/backend/gen/library/v1;libraryv1";
+
+// Library service definition
+service LibraryService {
+  // CreateLibrary creates a new library for the authenticated user
+  rpc CreateLibrary(CreateLibraryRequest) returns (CreateLibraryResponse) {
+    option (google.api.http) = {
+      post: "/v1/libraries"
+      body: "*"
+    };
+  }
+
+  // GetLibraries returns all libraries owned by the authenticated user
+  rpc GetLibraries(GetLibrariesRequest) returns (GetLibrariesResponse) {
+    option (google.api.http) = {
+      get: "/v1/libraries"
+    };
+  }
+
+  // GetLibrary returns a specific library by ID
+  rpc GetLibrary(GetLibraryRequest) returns (GetLibraryResponse) {
+    option (google.api.http) = {
+      get: "/v1/libraries/{library_id}"
+    };
+  }
+
+  // DeleteLibrary deletes a specific library by ID
+  rpc DeleteLibrary(DeleteLibraryRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/libraries/{library_id}"
+    };
+  }
+}
+
+// Library represents a collection of cards
+message Library {
+  int64 id = 1;
+  string name = 2;
+  int64 user_id = 3;
+}
+
+message CreateLibraryRequest {
+  string name = 1;
+}
+
+message CreateLibraryResponse {
+  int64 id = 1;
+}
+
+message GetLibrariesRequest {
+  // Currently empty as it uses authentication context
+}
+
+message GetLibrariesResponse {
+  repeated Library libraries = 1;
+}
+
+message GetLibraryRequest {
+  int64 library_id = 1;
+}
+
+message GetLibraryResponse {
+  Library library = 1;
+}
+
+message DeleteLibraryRequest {
+  int64 library_id = 1;
+}
