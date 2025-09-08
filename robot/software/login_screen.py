@@ -4,7 +4,6 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
-from magic_client.client import MagicClient  # Assuming this is the correct import
 
 class LoginScreen(Screen):
     def __init__(self, **kwargs):
@@ -65,9 +64,11 @@ class LoginScreen(Screen):
         
         try:
             token = self.magic_client.login(email, password)
-            App.get_running_app().auth_token = token
+            app = App.get_running_app()
+            app.auth_token = token
+            app.token_manager.save_token(token)
             self.error_label.text = ""
-            self.manager.current = "library_select"  # Changed from "catalog" to "library_select"
+            self.manager.current = "library_select"
         except Exception as e:
             self.error_label.text = f"Login failed: {str(e)}"
 
