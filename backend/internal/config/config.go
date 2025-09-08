@@ -19,6 +19,9 @@ type Config struct {
 		Port     string `env:"DB_PORT" envDefault:"3306"`
 		Host     string `env:"DB_HOST" envDefault:"localhost"`
 	}
+
+	HttpPort string `env:"HTTP_PORT" envDefault:":8080"`
+	GrpcPort string `env:"GRPC_PORT" envDefault:":9090"`
 }
 
 func ParseEnv() *Config {
@@ -34,6 +37,10 @@ func ParseEnv() *Config {
 
 func (c Config) MysqlDbString() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", c.DB.User, c.DB.Password, c.DB.Host, c.DB.Port, c.DB.Name)
+}
+
+func (c Config) MysqlDbStringRedacted() string {
+	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", c.DB.User, "***REDACTED***", c.DB.Host, c.DB.Port, c.DB.Name)
 }
 
 func getLogLevelFromStr(levelStr string) slog.Level {
