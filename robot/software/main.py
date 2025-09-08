@@ -1,10 +1,6 @@
-from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.label import Label
-
 from app import CardSorterApp
 
+# This is in a separate file so that the AI helper stops
+# deleting it when modifying the CardSorterApp itself.
 csa = CardSorterApp()
 csa.run()
