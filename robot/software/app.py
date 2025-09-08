@@ -16,18 +16,22 @@ class CardSorterApp(App):
         self.selected_library_id = None
         self.magic_client = MagicClient("http://localhost:8080")
         self.token_manager = TokenManager()
-
+        
     def build(self):
         try:
             print("Initializing Screens...")
+            # Request fullscreen mode
+            from kivy.core.window import Window
+            Window.fullscreen = 'auto'
+            
             sm = ScreenManager()
-
-            # Try to load saved token
+            
+            # Try to load a saved token
             saved_token = self.token_manager.load_token()
             if saved_token:
                 self.auth_token = saved_token
-                self.magic_client._token = saved_token  # Update magic_client token
-
+                self.magic_client._token = saved_token
+                
             sm.add_widget(MenuScreen(name="menu"))
             sm.add_widget(SortScreen(name="sort"))
             sm.add_widget(LoginScreen(name="login"))
@@ -37,4 +41,3 @@ class CardSorterApp(App):
         except Exception as e:
             print(f"Error initializing app: {str(e)}")
             raise
-
