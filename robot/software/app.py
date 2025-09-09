@@ -6,7 +6,7 @@ from sort_screen import SortScreen
 from login_screen import LoginScreen
 from library_select_screen import LibrarySelectScreen
 from catalog_screen import CatalogScreen
-from magic_client.client import MagicClient
+from magic_client import MagicClient
 from token_manager import TokenManager
 
 class CardSorterApp(App):
@@ -14,7 +14,7 @@ class CardSorterApp(App):
         super().__init__(**kwargs)
         self.auth_token = None
         self.selected_library_id = None
-        self.magic_client = MagicClient("http://localhost:8080")
+        self.magic_client = MagicClient("localhost", 9090)
         self.token_manager = TokenManager()
         
     def build(self):
