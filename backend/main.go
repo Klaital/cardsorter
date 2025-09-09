@@ -39,7 +39,7 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(server.AuthInterceptor),
+		grpc.UnaryInterceptor(server.SelectiveAuthInterceptor),
 	)
 
 	// Register all services

@@ -6,8 +6,6 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
 from kivy.uix.gridlayout import GridLayout
 from kivy.app import App
-from magic_client.client import MagicClientError
-
 
 class CreateLibraryPopup(Popup):
     def __init__(self, on_create_callback, **kwargs):
@@ -125,7 +123,7 @@ class LibrarySelectScreen(Screen):
 
             self.error_label.text = ""
 
-        except MagicClientError as e:
+        except Exception as e: # TODO: narrow this down to the right type
             self.error_label.text = f"Error loading libraries: {str(e)}"
 
     def show_create_popup(self, *args):
@@ -139,7 +137,7 @@ class LibrarySelectScreen(Screen):
             App.get_running_app().selected_library_id = library_id
             # Navigate to catalog screen
             self.manager.current = "catalog"
-        except MagicClientError as e:
+        except Exception as e: # TODO: narrow this down to the right type
             self.error_label.text = f"Error creating library: {str(e)}"
 
     def select_library(self, button):
