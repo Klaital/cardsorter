@@ -1,11 +1,11 @@
 version: v1
 plugins:
   - name: go
-    out: gen
+    out: backend/gen
     opt: paths=source_relative
   - name: go-grpc
-    out: gen
+    out: backend/gen
     opt: paths=source_relative
   - name: grpc-gateway
-    out: gen
+    out: backend/gen
     opt: paths=source_relative
