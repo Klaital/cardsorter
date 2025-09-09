@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             (unknown)
-// source: protos/user.proto
+// source: user.proto
 
 package cardv1
 
@@ -146,5 +146,5 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "protos/user.proto",
+	Metadata: "user.proto",
 }

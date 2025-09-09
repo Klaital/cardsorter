@@ -1,0 +1,15 @@
+version: v1
+plugins:
+  - name: go
+    out: ../backend/gen/protos
+    opt: paths=source_relative
+  - name: go-grpc
+    out: ../backend/gen/protos
+    opt: paths=source_relative
+  - name: grpc-gateway
+    out: ../backend/gen/protos
+    opt: paths=source_relative
+  - plugin: buf.build/protocolbuffers/python
+    out: ../robot/software/magic_client
+  - plugin: buf.build/grpc/python
+    out: ../robot/software/magic_client
