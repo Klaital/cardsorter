@@ -63,5 +63,6 @@ func main() {
 
 	// Start HTTP server
 	slog.Debug("Starting gRPC Gateway HTTP server", "port", cfg.HttpPort)
-	http.ListenAndServe(cfg.HttpPort, gwmux)
+	err = http.ListenAndServe(cfg.HttpPort, gwmux)
+	slog.Error("Unable to start http server", "err", err)
 }
