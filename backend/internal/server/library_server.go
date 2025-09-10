@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"log/slog"
 )
 
 type LibraryServer struct {
@@ -32,11 +33,13 @@ func (s *LibraryServer) CreateLibrary(ctx context.Context, req *pb.CreateLibrary
 		Name:   req.Name,
 	})
 	if err != nil {
+		slog.Error("failed to create library", "err", err)
 		return nil, status.Error(codes.Internal, "failed to create library")
 	}
 
 	libraryID, err := result.LastInsertId()
 	if err != nil {
+		slog.Error("failed to fetch new library ID", "err", err)
 		return nil, status.Error(codes.Internal, "failed to get created library ID")
 	}
 
@@ -48,14 +51,17 @@ func (s *LibraryServer) CreateLibrary(ctx context.Context, req *pb.CreateLibrary
 func (s *LibraryServer) GetLibraries(ctx context.Context, req *pb.GetLibrariesRequest) (*pb.GetLibrariesResponse, error) {
 	userID, err := getUserIDFromContext(ctx)
 	if err != nil {
+		slog.Error("failed to get user ID", "err", err)
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
 	}
 
 	queries := carddb.New(s.db)
 	libraries, err := queries.GetLibraries(ctx, userID)
 	if err != nil {
+		slog.Error("failed to fetch libraries", "err", err)
 		return nil, status.Error(codes.Internal, "failed to fetch libraries")
 	}
+	slog.Info("Fetched libraries", "count", len(libraries), "userId", userID)
 
 	response := &pb.GetLibrariesResponse{
 		Libraries: make([]*pb.Library, 0, len(libraries)),

@@ -7,6 +7,9 @@ from kivy.uix.popup import Popup
 from kivy.uix.gridlayout import GridLayout
 from kivy.app import App
 
+from robot.software.magic_client import MagicClient
+
+
 class CreateLibraryPopup(Popup):
     def __init__(self, on_create_callback, **kwargs):
         super().__init__(**kwargs)
@@ -48,6 +51,7 @@ class CreateLibraryPopup(Popup):
 class LibrarySelectScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.libraries = []
         self.magic_client = App.get_running_app().magic_client
 
         self.layout = BoxLayout(orientation='vertical', padding=20, spacing=10)
@@ -102,18 +106,18 @@ class LibrarySelectScreen(Screen):
         """Load and display libraries from the backend"""
         try:
             self.libraries_layout.clear_widgets()
-            libraries = self.magic_client.get_libraries()
+            self.libraries = self.magic_client.get_libraries()
 
-            if not libraries:
+            if not self.libraries:
                 self.libraries_layout.add_widget(Label(
                     text="No libraries found. Create one to get started!",
                     size_hint=(1, None),
                     height=40
                 ))
             else:
-                for library in libraries:
+                for library in self.libraries:
                     btn = Button(
-                        text=library.name,
+                        text=f"{library.name}",
                         size_hint=(1, None),
                         height=40
                     )
@@ -142,7 +146,11 @@ class LibrarySelectScreen(Screen):
 
     def select_library(self, button):
         # Store the selected library ID in the app
-        App.get_running_app().selected_library_id = button.library_id
+        selected_library = None
+        for l in self.libraries:
+            if l.id == button.library_id:
+                App.get_running_app().selected_library = l
+
         # Navigate to catalog screen
         self.manager.current = "catalog"
 

@@ -22,9 +22,13 @@ type Config struct {
 
 	HttpPort string `env:"HTTP_PORT" envDefault:":8080"`
 	GrpcPort string `env:"GRPC_PORT" envDefault:":9090"`
+
+	JwtKeyStr string `env:"JWT_KEY"`
+	JwtKey    []byte
 }
 
-func ParseEnv() *Config {
+func ParseEnv() Config {
+	// TODO: return a singleton config
 	cfg, err := env.ParseAs[Config]()
 	if err != nil {
 		slog.Error("Failed to parse environment", "err", err.Error())
@@ -32,7 +36,8 @@ func ParseEnv() *Config {
 	}
 	cfg.LogLevel = getLogLevelFromStr(cfg.LogLevelStr)
 	slog.SetLogLoggerLevel(cfg.LogLevel)
-	return &cfg
+	cfg.JwtKey = []byte(cfg.JwtKeyStr)
+	return cfg
 }
 
 func (c Config) MysqlDbString() string {

@@ -173,9 +173,9 @@ class CatalogScreen(Screen):
     def on_enter(self):
         """Called when screen is entered"""
         app = App.get_running_app()
-        if app.selected_library_id:
+        if app.selected_library:
             try:
-                library = app.magic_client.get_library(app.selected_library_id)
+                library = app.selected_library
                 self.library_label.text = f"Library: {library.name}"
             except Exception as e:
                 print(f"Error fetching library details: {e}")

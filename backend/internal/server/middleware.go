@@ -2,6 +2,10 @@ package server
 
 import (
 	"context"
+	"github.com/golang-jwt/jwt"
+	"github.com/klaital/cardsorter/backend/internal/auth"
+	"github.com/klaital/cardsorter/backend/internal/config"
+	"log/slog"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -17,8 +21,24 @@ func getUserIDFromContext(ctx context.Context) (int64, error) {
 	// This implementation will depend on how you're storing the user ID in the context
 	// You might want to define your own context key type
 
-	if userID, ok := ctx.Value(userIDKey{}).(int64); ok {
-		return userID, nil
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return 0, status.Error(codes.Unauthenticated, "user ID not found in context")
+	}
+	slog.Debug("Loaded metadata", "raw", md)
+	if values, ok := md["authorization"]; ok {
+		// Parse the JWT
+		claims := &auth.Claims{}
+		token, err := jwt.ParseWithClaims(values[0], claims, func(token *jwt.Token) (interface{}, error) {
+			return config.ParseEnv().JwtKey, nil
+		})
+
+		if err != nil || !token.Valid {
+			slog.Error("Failed to parse JWT", "err", err, "valid", token.Valid)
+			return 0, status.Error(codes.Internal, "failed to parse JWT")
+		}
+		
+		return claims.UserID, nil
 	}
 	return 0, status.Error(codes.Unauthenticated, "user ID not found in context")
 }

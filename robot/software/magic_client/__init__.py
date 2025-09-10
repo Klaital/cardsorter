@@ -23,7 +23,7 @@ class MagicClient:
 
     def _get_auth_metadata(self):
         """Create metadata with authentication token."""
-        return [('authorization', f'Bearer {self._auth_token}')] if self._auth_token else []
+        return [('authorization', f'{self._auth_token}')] if self._auth_token else []
 
     def login(self, email: str, password: str) -> str:
         """Login with email and password.
@@ -70,8 +70,10 @@ class MagicClient:
             grpc.RpcError: If request fails
         """
         metadata = self._get_auth_metadata()
+        print(f"Refreshing library list from backend metadata={metadata}")
         request = library_pb2.GetLibrariesRequest()
         response = self.library_stub.GetLibraries(request, metadata=metadata)
+        print(f"Got library response")
         return response.libraries
 
     def scan_card(self, image_bytes: bytes):

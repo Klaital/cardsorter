@@ -13,8 +13,8 @@ class CardSorterApp(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.auth_token = None
-        self.selected_library_id = None
-        self.magic_client = MagicClient("localhost", 9090)
+        self.selected_library = None
+        self.magic_client: MagicClient = MagicClient("localhost", 9090)
         self.token_manager = TokenManager()
         
     def build(self):
@@ -30,7 +30,7 @@ class CardSorterApp(App):
             saved_token = self.token_manager.load_token()
             if saved_token:
                 self.auth_token = saved_token
-                self.magic_client._token = saved_token
+                self.magic_client._auth_token = saved_token
                 
             sm.add_widget(MenuScreen(name="menu"))
             sm.add_widget(SortScreen(name="sort"))

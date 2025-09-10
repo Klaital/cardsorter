@@ -16,13 +16,11 @@ const (
 )
 
 var publicMethods = map[string]bool{
-	"/user.v1.UserService/Register": false,
-	"/user.v1.UserService/Login":    true,
+	"/user.v1.UserService/Login": true,
 }
 
 var deviceAuthMethods = map[string]bool{
 	"/user.v1.UserService/Register": true,
-	"/user.v1.UserService/Login":    false,
 }
 
 func SelectiveAuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {

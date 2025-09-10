@@ -2,14 +2,13 @@ package auth
 
 import (
 	"context"
+	"github.com/klaital/cardsorter/backend/internal/config"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 )
-
-var jwtKey = []byte("your-secret-key") // In production, use environment variables
 
 type Claims struct {
 	UserID int64 `json:"user_id"`
@@ -26,7 +25,7 @@ func GenerateToken(userID int64) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtKey)
+	return token.SignedString(config.ParseEnv().JwtKey)
 }
 
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -45,7 +44,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		claims := &Claims{}
 		token, err := jwt.ParseWithClaims(bearerToken[1], claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
+			return config.ParseEnv().JwtKey, nil
 		})
 
 		if err != nil || !token.Valid {
