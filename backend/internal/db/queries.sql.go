@@ -11,8 +11,10 @@ import (
 )
 
 const createCard = `-- name: CreateCard :execresult
-INSERT INTO cards (library_id, name, set_name, cnd, foil, collector_num, usd)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT INTO cards (library_id, name, set_name, cnd, foil, collector_num, usd, qty)
+VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+ON DUPLICATE KEY UPDATE
+    qty = qty + 1
 `
 
 type CreateCardParams struct {
@@ -91,7 +93,7 @@ func (q *Queries) DeleteLibrary(ctx context.Context, arg DeleteLibraryParams) er
 }
 
 const getCard = `-- name: GetCard :one
-SELECT id, library_id, name, set_name, collector_num, cnd, foil, usd, created_at, updated_at FROM cards
+SELECT id, library_id, name, set_name, collector_num, cnd, foil, usd, created_at, updated_at, qty FROM cards
 WHERE id = ?
 `
 
@@ -109,12 +111,13 @@ func (q *Queries) GetCard(ctx context.Context, id int64) (Card, error) {
 		&i.Usd,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Qty,
 	)
 	return i, err
 }
 
 const getCards = `-- name: GetCards :many
-SELECT id, library_id, name, set_name, collector_num, cnd, foil, usd, created_at, updated_at FROM cards
+SELECT id, library_id, name, set_name, collector_num, cnd, foil, usd, created_at, updated_at, qty FROM cards
 WHERE library_id = ?
 `
 
@@ -138,6 +141,7 @@ func (q *Queries) GetCards(ctx context.Context, libraryID int64) ([]Card, error)
 			&i.Usd,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Qty,
 		); err != nil {
 			return nil, err
 		}

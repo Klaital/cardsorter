@@ -35,7 +35,7 @@ func (s *CardServer) CreateCard(ctx context.Context, req *pb.CreateCardRequest) 
 		UserID: userID,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "library not found")
 		}
 		return nil, status.Error(codes.Internal, "failed to verify library ownership")
@@ -225,5 +225,6 @@ func toProtoCard(card carddb.Card) *pb.Card {
 		Foil:            card.Foil.Bool,
 		CollectorNumber: card.CollectorNum,
 		UsdPrice:        card.Usd,
+		Qty:             int32(card.Qty),
 	}
 }

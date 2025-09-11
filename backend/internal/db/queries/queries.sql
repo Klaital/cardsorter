@@ -34,8 +34,10 @@ DELETE FROM libraries
 WHERE id = ? AND user_id = ? LIMIT 1;
 
 -- name: CreateCard :execresult
-INSERT INTO cards (library_id, name, set_name, cnd, foil, collector_num, usd)
-VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT INTO cards (library_id, name, set_name, cnd, foil, collector_num, usd, qty)
+VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+ON DUPLICATE KEY UPDATE
+    qty = qty + 1;
 
 -- name: GetCards :many
 SELECT * FROM cards

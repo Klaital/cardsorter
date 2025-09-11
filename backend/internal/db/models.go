@@ -19,6 +19,7 @@ type Card struct {
 	Usd          int32        `json:"usd"`
 	CreatedAt    sql.NullTime `json:"created_at"`
 	UpdatedAt    sql.NullTime `json:"updated_at"`
+	Qty          uint32       `json:"qty"`
 }
 
 type Library struct {
