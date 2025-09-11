@@ -1,6 +1,7 @@
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
-
+from dotenv import load_dotenv
+import os
 from menu_screen import MenuScreen
 from sort_screen import SortScreen
 from login_screen import LoginScreen
@@ -14,7 +15,19 @@ class CardSorterApp(App):
         super().__init__(**kwargs)
         self.auth_token = None
         self.selected_library = None
-        self.magic_client: MagicClient = MagicClient("localhost", 9090)
+        
+        # Load environment variables
+        load_dotenv()
+        
+        # Get configuration with fallbacks
+        host = os.getenv('CARDSORTER_BACKEND_HOST', 'localhost')
+        try:
+            port = int(os.getenv('CARDSORTER_BACKEND_PORT', '9090'))
+        except ValueError:
+            print("Invalid port in environment variables, using default 9090")
+            port = 9090
+            
+        self.magic_client = MagicClient(host=host, port=port)
         self.token_manager = TokenManager()
         
     def build(self):
