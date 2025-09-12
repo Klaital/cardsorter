@@ -23,7 +23,7 @@ jobs:
     - name: Build
       run: |
         cd backend
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cardsorter ./cmd/main.go
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cardsorter .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
