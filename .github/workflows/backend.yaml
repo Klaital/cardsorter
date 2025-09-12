@@ -66,6 +66,9 @@ jobs:
         ssh kit@klaital.com 'mkdir -p /home/kit/bin/cardsorter'
         scp cardsorter kit@klaital.com:/home/kit/bin/cardsorter/
 
+        # Systemctl apparently fails if we move too fast.
+        sleep 2
+        
         # Restart the service
         ssh kit@klaital.com 'sudo systemctl start cardsorter.service'
 
