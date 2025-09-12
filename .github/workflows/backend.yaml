@@ -23,7 +23,7 @@ jobs:
     - name: Build
       run: |
         cd backend
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cardsorter ./cmd/main.go
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cardsorter .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -58,12 +58,15 @@ jobs:
         echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
         chmod 600 ~/.ssh/id_rsa
         
+        # Stop the service
+        ssh kit@klaital.com 'sudo systemctl stop cardsorter.service'
+
         # Create target directory and copy binary
         ssh kit@klaital.com 'mkdir -p /home/kit/bin/cardsorter'
         scp cardsorter kit@klaital.com:/home/kit/bin/cardsorter/
 
         # Restart the service
-        ssh kit@klaital.com 'sudo systemctl restart cardsorter.service'
+        ssh kit@klaital.com 'sudo systemctl start cardsorter.service'
 
         # Check service status
         ssh kit@klaital.com 'sudo systemctl status cardsorter.service --no-pager'
