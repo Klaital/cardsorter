@@ -13,3 +13,8 @@ plugins:
     out: ../robot/software/magic_client
   - plugin: buf.build/grpc/python
     out: ../robot/software/magic_client
+  - plugin: openapiv2
+    out: ../backend/gen/openapiv2
+    opt:
+      - allow_merge=true
+      - merge_file_name=openapi

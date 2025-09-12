@@ -23,28 +23,29 @@ _sym_db = _symbol_database.Default()
 
 
 from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
+from protoc_gen_openapiv2.options import annotations_pb2 as protoc__gen__openapiv2_dot_options_dot_annotations__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nuser.proto\x12\x07user.v1\x1a\x1cgoogle/api/annotations.proto\"E\n\x11\x43reateUserRequest\x12\x14\n\x05\x65mail\x18\x01 \x01(\tR\x05\x65mail\x12\x1a\n\x08password\x18\x02 \x01(\tR\x08password\":\n\x12\x43reateUserResponse\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n\x05token\x18\x02 \x01(\tR\x05token\"@\n\x0cLoginRequest\x12\x14\n\x05\x65mail\x18\x01 \x01(\tR\x05\x65mail\x12\x1a\n\x08password\x18\x02 \x01(\tR\x08password\">\n\rLoginResponse\x12\x17\n\x07user_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n\x05token\x18\x02 \x01(\tR\x05token2\xb8\x01\n\x0bUserService\x12[\n\nCreateUser\x12\x1a.user.v1.CreateUserRequest\x1a\x1b.user.v1.CreateUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\"\t/v1/users:\x01*\x12L\n\x05Login\x12\x15.user.v1.LoginRequest\x1a\x16.user.v1.LoginResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\"\t/v1/login:\x01*B9Z7github.com/klaital/cardsorter/backend/gen/protos;cardv1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nuser.proto\x12\x07user.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"E\n\x11\x43reateUserRequest\x12\x14\n\x05\x65mail\x18\x01 \x01(\tR\x05\x65mail\x12\x1a\n\x08password\x18\x02 \x01(\tR\x08password\":\n\x12\x43reateUserResponse\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n\x05token\x18\x02 \x01(\tR\x05token\"@\n\x0cLoginRequest\x12\x14\n\x05\x65mail\x18\x01 \x01(\tR\x05\x65mail\x12\x1a\n\x08password\x18\x02 \x01(\tR\x08password\">\n\rLoginResponse\x12\x17\n\x07user_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n\x05token\x18\x02 \x01(\tR\x05token2\xb8\x01\n\x0bUserService\x12[\n\nCreateUser\x12\x1a.user.v1.CreateUserRequest\x1a\x1b.user.v1.CreateUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\"\t/v1/users:\x01*\x12L\n\x05Login\x12\x15.user.v1.LoginRequest\x1a\x16.user.v1.LoginResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\"\t/v1/login:\x01*B\xb7\x01Z7github.com/klaital/cardsorter/backend/gen/protos;cardv1\x92\x41{\x12y\n\x10User Service API\x12#API for managing users and sessions\";\n\x12Login Service Team\x12%https://github.com/klaital/cardsorter2\x03\x31.0b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'user_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z7github.com/klaital/cardsorter/backend/gen/protos;cardv1'
+  _globals['DESCRIPTOR']._serialized_options = b'Z7github.com/klaital/cardsorter/backend/gen/protos;cardv1\222A{\022y\n\020User Service API\022#API for managing users and sessions\";\n\022Login Service Team\022%https://github.com/klaital/cardsorter2\0031.0'
   _globals['_USERSERVICE'].methods_by_name['CreateUser']._loaded_options = None
   _globals['_USERSERVICE'].methods_by_name['CreateUser']._serialized_options = b'\202\323\344\223\002\016\"\t/v1/users:\001*'
   _globals['_USERSERVICE'].methods_by_name['Login']._loaded_options = None
   _globals['_USERSERVICE'].methods_by_name['Login']._serialized_options = b'\202\323\344\223\002\016\"\t/v1/login:\001*'
-  _globals['_CREATEUSERREQUEST']._serialized_start=53
-  _globals['_CREATEUSERREQUEST']._serialized_end=122
-  _globals['_CREATEUSERRESPONSE']._serialized_start=124
-  _globals['_CREATEUSERRESPONSE']._serialized_end=182
-  _globals['_LOGINREQUEST']._serialized_start=184
-  _globals['_LOGINREQUEST']._serialized_end=248
-  _globals['_LOGINRESPONSE']._serialized_start=250
-  _globals['_LOGINRESPONSE']._serialized_end=312
-  _globals['_USERSERVICE']._serialized_start=315
-  _globals['_USERSERVICE']._serialized_end=499
+  _globals['_CREATEUSERREQUEST']._serialized_start=101
+  _globals['_CREATEUSERREQUEST']._serialized_end=170
+  _globals['_CREATEUSERRESPONSE']._serialized_start=172
+  _globals['_CREATEUSERRESPONSE']._serialized_end=230
+  _globals['_LOGINREQUEST']._serialized_start=232
+  _globals['_LOGINREQUEST']._serialized_end=296
+  _globals['_LOGINRESPONSE']._serialized_start=298
+  _globals['_LOGINRESPONSE']._serialized_end=360
+  _globals['_USERSERVICE']._serialized_start=363
+  _globals['_USERSERVICE']._serialized_end=547
 # @@protoc_insertion_point(module_scope)

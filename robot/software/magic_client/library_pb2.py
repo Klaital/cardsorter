@@ -24,40 +24,41 @@ _sym_db = _symbol_database.Default()
 
 from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
+from protoc_gen_openapiv2.options import annotations_pb2 as protoc__gen__openapiv2_dot_options_dot_annotations__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rlibrary.proto\x12\nlibrary.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\"F\n\x07Library\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x17\n\x07user_id\x18\x03 \x01(\x03R\x06userId\"*\n\x14\x43reateLibraryRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\"\'\n\x15\x43reateLibraryResponse\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"\x15\n\x13GetLibrariesRequest\"I\n\x14GetLibrariesResponse\x12\x31\n\tlibraries\x18\x01 \x03(\x0b\x32\x13.library.v1.LibraryR\tlibraries\"2\n\x11GetLibraryRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\"C\n\x12GetLibraryResponse\x12-\n\x07library\x18\x01 \x01(\x0b\x32\x13.library.v1.LibraryR\x07library\"5\n\x14\x44\x65leteLibraryRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId2\xca\x03\n\x0eLibraryService\x12n\n\rCreateLibrary\x12 .library.v1.CreateLibraryRequest\x1a!.library.v1.CreateLibraryResponse\"\x18\x82\xd3\xe4\x93\x02\x12\"\r/v1/libraries:\x01*\x12h\n\x0cGetLibraries\x12\x1f.library.v1.GetLibrariesRequest\x1a .library.v1.GetLibrariesResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\x12\r/v1/libraries\x12o\n\nGetLibrary\x12\x1d.library.v1.GetLibraryRequest\x1a\x1e.library.v1.GetLibraryResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/v1/libraries/{library_id}\x12m\n\rDeleteLibrary\x12 .library.v1.DeleteLibraryRequest\x1a\x16.google.protobuf.Empty\"\"\x82\xd3\xe4\x93\x02\x1c*\x1a/v1/libraries/{library_id}B9Z7github.com/klaital/cardsorter/backend/gen/protos;cardv1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rlibrary.proto\x12\nlibrary.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"F\n\x07Library\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x17\n\x07user_id\x18\x03 \x01(\x03R\x06userId\"*\n\x14\x43reateLibraryRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\"\'\n\x15\x43reateLibraryResponse\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\"\x15\n\x13GetLibrariesRequest\"I\n\x14GetLibrariesResponse\x12\x31\n\tlibraries\x18\x01 \x03(\x0b\x32\x13.library.v1.LibraryR\tlibraries\"2\n\x11GetLibraryRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\"C\n\x12GetLibraryResponse\x12-\n\x07library\x18\x01 \x01(\x0b\x32\x13.library.v1.LibraryR\x07library\"5\n\x14\x44\x65leteLibraryRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId2\x82\x04\n\x0eLibraryService\x12\xa5\x01\n\rCreateLibrary\x12 .library.v1.CreateLibraryRequest\x1a!.library.v1.CreateLibraryResponse\"O\x92\x41\x34\n\x05\x63\x61rds\x12\x14\x43reate a new library\x1a\x15\x43reates a new library\x82\xd3\xe4\x93\x02\x12\"\r/v1/libraries:\x01*\x12h\n\x0cGetLibraries\x12\x1f.library.v1.GetLibrariesRequest\x1a .library.v1.GetLibrariesResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\x12\r/v1/libraries\x12o\n\nGetLibrary\x12\x1d.library.v1.GetLibraryRequest\x1a\x1e.library.v1.GetLibraryResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/v1/libraries/{library_id}\x12m\n\rDeleteLibrary\x12 .library.v1.DeleteLibraryRequest\x1a\x16.google.protobuf.Empty\"\"\x82\xd3\xe4\x93\x02\x1c*\x1a/v1/libraries/{library_id}B\xc9\x01Z7github.com/klaital/cardsorter/backend/gen/protos;cardv1\x92\x41\x8c\x01\x12\x89\x01\n\x13Library Service API\x12.API for managing libraries of your collections\"=\n\x14Library Service Team\x12%https://github.com/klaital/cardsorter2\x03\x31.0b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'library_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z7github.com/klaital/cardsorter/backend/gen/protos;cardv1'
+  _globals['DESCRIPTOR']._serialized_options = b'Z7github.com/klaital/cardsorter/backend/gen/protos;cardv1\222A\214\001\022\211\001\n\023Library Service API\022.API for managing libraries of your collections\"=\n\024Library Service Team\022%https://github.com/klaital/cardsorter2\0031.0'
   _globals['_LIBRARYSERVICE'].methods_by_name['CreateLibrary']._loaded_options = None
-  _globals['_LIBRARYSERVICE'].methods_by_name['CreateLibrary']._serialized_options = b'\202\323\344\223\002\022\"\r/v1/libraries:\001*'
+  _globals['_LIBRARYSERVICE'].methods_by_name['CreateLibrary']._serialized_options = b'\222A4\n\005cards\022\024Create a new library\032\025Creates a new library\202\323\344\223\002\022\"\r/v1/libraries:\001*'
   _globals['_LIBRARYSERVICE'].methods_by_name['GetLibraries']._loaded_options = None
   _globals['_LIBRARYSERVICE'].methods_by_name['GetLibraries']._serialized_options = b'\202\323\344\223\002\017\022\r/v1/libraries'
   _globals['_LIBRARYSERVICE'].methods_by_name['GetLibrary']._loaded_options = None
   _globals['_LIBRARYSERVICE'].methods_by_name['GetLibrary']._serialized_options = b'\202\323\344\223\002\034\022\032/v1/libraries/{library_id}'
   _globals['_LIBRARYSERVICE'].methods_by_name['DeleteLibrary']._loaded_options = None
   _globals['_LIBRARYSERVICE'].methods_by_name['DeleteLibrary']._serialized_options = b'\202\323\344\223\002\034*\032/v1/libraries/{library_id}'
-  _globals['_LIBRARY']._serialized_start=88
-  _globals['_LIBRARY']._serialized_end=158
-  _globals['_CREATELIBRARYREQUEST']._serialized_start=160
-  _globals['_CREATELIBRARYREQUEST']._serialized_end=202
-  _globals['_CREATELIBRARYRESPONSE']._serialized_start=204
-  _globals['_CREATELIBRARYRESPONSE']._serialized_end=243
-  _globals['_GETLIBRARIESREQUEST']._serialized_start=245
-  _globals['_GETLIBRARIESREQUEST']._serialized_end=266
-  _globals['_GETLIBRARIESRESPONSE']._serialized_start=268
-  _globals['_GETLIBRARIESRESPONSE']._serialized_end=341
-  _globals['_GETLIBRARYREQUEST']._serialized_start=343
-  _globals['_GETLIBRARYREQUEST']._serialized_end=393
-  _globals['_GETLIBRARYRESPONSE']._serialized_start=395
-  _globals['_GETLIBRARYRESPONSE']._serialized_end=462
-  _globals['_DELETELIBRARYREQUEST']._serialized_start=464
-  _globals['_DELETELIBRARYREQUEST']._serialized_end=517
-  _globals['_LIBRARYSERVICE']._serialized_start=520
-  _globals['_LIBRARYSERVICE']._serialized_end=978
+  _globals['_LIBRARY']._serialized_start=136
+  _globals['_LIBRARY']._serialized_end=206
+  _globals['_CREATELIBRARYREQUEST']._serialized_start=208
+  _globals['_CREATELIBRARYREQUEST']._serialized_end=250
+  _globals['_CREATELIBRARYRESPONSE']._serialized_start=252
+  _globals['_CREATELIBRARYRESPONSE']._serialized_end=291
+  _globals['_GETLIBRARIESREQUEST']._serialized_start=293
+  _globals['_GETLIBRARIESREQUEST']._serialized_end=314
+  _globals['_GETLIBRARIESRESPONSE']._serialized_start=316
+  _globals['_GETLIBRARIESRESPONSE']._serialized_end=389
+  _globals['_GETLIBRARYREQUEST']._serialized_start=391
+  _globals['_GETLIBRARYREQUEST']._serialized_end=441
+  _globals['_GETLIBRARYRESPONSE']._serialized_start=443
+  _globals['_GETLIBRARYRESPONSE']._serialized_end=510
+  _globals['_DELETELIBRARYREQUEST']._serialized_start=512
+  _globals['_DELETELIBRARYREQUEST']._serialized_end=565
+  _globals['_LIBRARYSERVICE']._serialized_start=568
+  _globals['_LIBRARYSERVICE']._serialized_end=1082
 # @@protoc_insertion_point(module_scope)

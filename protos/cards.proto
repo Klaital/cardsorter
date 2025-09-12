@@ -4,8 +4,22 @@ package card.v1;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/klaital/cardsorter/backend/gen/protos;cardv1";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Card Service API";
+    version: "1.0";
+    description: "API for managing cards in your collections";
+    contact: {
+      name: "Card Service Team";
+      url: "https://github.com/klaital/cardsorter";
+    };
+  }
+};
+
 
 service CardService {
   // CreateCard creates a new card in a library
@@ -14,6 +28,11 @@ service CardService {
       post: "/v1/libraries/{library_id}/cards"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create a new card"
+      description: "Creates a new card in the specified library"
+      tags: ["cards"]
+    };
   }
 
   // GetCards retrieves all cards in a library
@@ -21,12 +40,23 @@ service CardService {
     option (google.api.http) = {
       get: "/v1/libraries/{library_id}/cards"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Fetch the cards in the specified library"
+      description: "Fetch the cards in the specified library"
+      tags: ["cards"]
+    };
+
   }
 
   // GetCard retrieves a specific card
   rpc GetCard(GetCardRequest) returns (GetCardResponse) {
     option (google.api.http) = {
       get: "/v1/libraries/{library_id}/cards/{card_id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Fetch the details for a specific card from a library"
+      description: "Fetch the details for a specific card from a library"
+      tags: ["cards"]
     };
   }
 
@@ -36,12 +66,22 @@ service CardService {
       post: "/v1/libraries/{library_id}/cards/{card_id}/move"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Move a card from one library to another"
+      description: "Move a card from one library to another"
+      tags: ["cards"]
+    };
   }
 
   // DeleteCard removes a card from a library
   rpc DeleteCard(DeleteCardRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v1/libraries/{library_id}/cards/{card_id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete all copies of a card from a library."
+      description: "Delete all copies of a card from a library."
+      tags: ["cards"]
     };
   }
 }
@@ -50,10 +90,16 @@ message Card {
   int64 id = 1;
   int64 library_id = 2;
   string name = 3;
-  string set_name = 4;
-  string condition = 5;
+  string set_name = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Set ID, e.g. 'FIN'"
+  }];
+  string condition = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Description of the card condition"
+  }];
   bool foil = 6;
-  string collector_number = 7;
+  string collector_number = 7 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "The collection number for this card, e.g. '0210'"
+  }];
   int32 usd_price = 8;
   int32 qty = 9;
 }

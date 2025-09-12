@@ -5,8 +5,22 @@ package library.v1;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/klaital/cardsorter/backend/gen/protos;cardv1";
+
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Library Service API";
+    version: "1.0";
+    description: "API for managing libraries of your collections";
+    contact: {
+      name: "Library Service Team";
+      url: "https://github.com/klaital/cardsorter";
+    };
+  }
+};
 
 // Library service definition
 service LibraryService {
@@ -15,6 +29,11 @@ service LibraryService {
     option (google.api.http) = {
       post: "/v1/libraries"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create a new library"
+      description: "Creates a new library"
+      tags: ["cards"]
     };
   }
 
