@@ -39,9 +39,21 @@ class CatalogScreen(Screen):
         self.picam = None
         self.setup_camera()
         
-        # Cropped preview image placeholder
-        self.cropped_preview = Image(size_hint=(1, 0.5))
-#        self.layout.add_widget(self.cropped_preview)
+        # Create a BoxLayout for camera and preview side by side
+        camera_row = BoxLayout(orientation='horizontal', size_hint=(1, 0.5))
+        
+        # Camera view (left side)
+        camera_container = BoxLayout(size_hint=(0.7, 1))
+        camera_container.add_widget(self.camera)
+        camera_row.add_widget(camera_container)
+        
+        # Preview (right side)
+        preview_container = BoxLayout(size_hint=(0.3, 1))
+        self.cropped_preview = Image(size_hint=(1, 1))
+        preview_container.add_widget(self.cropped_preview)
+        camera_row.add_widget(preview_container)
+        
+        self.layout.add_widget(camera_row)
 
         # Labels for card info
         self.title_label = Label(text="Title: ", font_size=18)
@@ -67,6 +79,9 @@ class CatalogScreen(Screen):
         self.layout.add_widget(button_row)
         self.add_widget(self.layout)
 
+        # Schedule the preview update
+        Clock.schedule_interval(self.update_preview, 1.0/30.0)
+
         # Load card database
         try:
             with open("cards.json", "r", encoding="utf-8") as f:
@@ -79,6 +94,42 @@ class CatalogScreen(Screen):
             name = card.get("name")
             if name:
                 self.card_lookup[name.lower()] = card
+
+    def update_preview(self, dt):
+        """Update the cropped preview"""
+        try:
+            if self.picam:
+                # Capture from Pi camera
+                frame = self.picam.capture_array()
+                pil_img = PILImage.fromarray(frame)
+            else:
+                # Capture from regular camera
+                if not self.camera.texture:
+                    return
+                texture = self.camera.texture
+                size = texture.size
+                pixels = texture.pixels
+                pil_img = PILImage.frombytes(mode="RGBA", size=size, data=pixels)
+
+            # Crop the image
+            W, H = pil_img.size
+            top = int(0.9 * H)
+            bottom = H
+            left = int(W / 3)
+            right = int(2 * W / 3)
+
+            cropped = pil_img.crop((left, top, right, bottom))
+            
+            # Convert cropped PIL -> Kivy texture
+            cropped = cropped.convert("RGBA")
+            data = cropped.tobytes()
+            tex = Texture.create(size=cropped.size)
+            tex.blit_buffer(data, colorfmt="rgba", bufferfmt="ubyte")
+            
+            # Update the preview
+            self.cropped_preview.texture = tex
+        except Exception as e:
+            print(f"Error updating preview: {e}")
 
     def setup_camera(self):
         if PICAM_AVAILABLE:
