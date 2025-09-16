@@ -9,6 +9,7 @@ from kivy.graphics.texture import Texture
 from PIL import Image as PILImage
 from kivy.clock import Clock
 from kivy.app import App
+import cv2
 
 # Try importing Picamera2 for Raspberry Pi camera support
 try:
@@ -40,7 +41,7 @@ class CatalogScreen(Screen):
         
         # Cropped preview image placeholder
         self.cropped_preview = Image(size_hint=(1, 0.5))
-        self.layout.add_widget(self.cropped_preview)
+#        self.layout.add_widget(self.cropped_preview)
 
         # Labels for card info
         self.title_label = Label(text="Title: ", font_size=18)
@@ -84,8 +85,8 @@ class CatalogScreen(Screen):
             try:
                 self.picam = Picamera2()
                 config = self.picam.create_preview_configuration(
-                    main={"size": (640, 480)},
-                    controls={"FrameDurationLimits": (33333, 33333)}  # ~30fps
+                        main={"size": (640, 480), "format": "RGB888"},
+                        controls={"FrameDurationLimits": (33333, 33333)}  # ~30fps
                 )
                 self.picam.configure(config)
                 self.picam.start()
@@ -110,9 +111,10 @@ class CatalogScreen(Screen):
             # Capture frame from Pi camera
             frame = self.picam.capture_array()
             # Convert to format Kivy can display
-            buf = frame.tobytes()
-            texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='rgb')
-            texture.blit_buffer(buf, colorfmt='rgb', bufferfmt='ubyte')
+            pil_img = PILImage.fromarray(frame)
+            buf = pil_img.tobytes()
+            texture = Texture.create(size=(pil_img.width, pil_img.height), colorfmt='bgr')
+            texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
             self.camera.texture = texture
 
     def submit_action(self, *args):
@@ -124,6 +126,7 @@ class CatalogScreen(Screen):
             # Capture from Pi camera
             frame = self.picam.capture_array()
             pil_img = PILImage.fromarray(frame)
+            self.picam.capture_file('debug.jpg')
         else:
             # Capture from regular camera
             if not self.camera.texture:
@@ -142,14 +145,15 @@ class CatalogScreen(Screen):
         right = int(2 * W / 3)
 
         cropped = pil_img.crop((left, top, right, bottom))
+        cropped.save('cropped.png')
 
         # Convert cropped PIL -> Kivy texture
-        cropped = cropped.convert("RGBA")
-        data = cropped.tobytes()
-        tex = Texture.create(size=cropped.size)
-        tex.blit_buffer(data, colorfmt="rgba", bufferfmt="ubyte")
+#        cropped = cropped.convert("RGBA")
+#        data = cropped.tobytes()
+#        tex = Texture.create(size=cropped.size)
+#        tex.blit_buffer(data, colorfmt="rgba", bufferfmt="ubyte")
 
-        self.cropped_preview.texture = tex
+#        self.cropped_preview.texture = tex
 
         # (Placeholder detection until OCR is added)
         detected_card = "Black Lotus"
