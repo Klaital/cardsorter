@@ -7,9 +7,6 @@ from kivy.uix.popup import Popup
 from kivy.uix.gridlayout import GridLayout
 from kivy.app import App
 
-from robot.software.magic_client import MagicClient
-
-
 class CreateLibraryPopup(Popup):
     def __init__(self, on_create_callback, **kwargs):
         super().__init__(**kwargs)
