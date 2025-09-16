@@ -11,58 +11,69 @@ class LoginScreen(Screen):
         super().__init__(**kwargs)
         self.magic_client = App.get_running_app().magic_client
 
-        # Enable keyboard auto popup
-        Window.softinput_mode = 'below_target'
-
+        # Main layout
         layout = BoxLayout(orientation='vertical', padding=20, spacing=10)
 
-        # Email input with keyboard focus
+        # Top section for inputs (1/3 of screen)
+        top_section = BoxLayout(orientation='vertical', size_hint=(1, 0.33))
+        
+        # Title
+        title_label = Label(
+            text="Login",
+            font_size=24,
+            size_hint=(1, 0.2)
+        )
+        top_section.add_widget(title_label)
+
+        # Email input
         self.email_input = TextInput(
             multiline=False,
             hint_text='Enter email',
-            size_hint=(1, 0.2),
-            use_bubble=True,  # Enable text bubble
-            use_handles=True  # Enable selection handles
+            size_hint=(1, 0.4)
         )
+        top_section.add_widget(self.email_input)
 
-        # Password input with keyboard focus
+        # Password input
         self.password_input = TextInput(
             multiline=False,
             password=True,
             hint_text='Enter password',
-            size_hint=(1, 0.2),
-            use_bubble=True,  # Enable text bubble
-            use_handles=True  # Enable selection handles
+            size_hint=(1, 0.4)
         )
+        top_section.add_widget(self.password_input)
 
-        # Login button
+        # Add top section to main layout
+        layout.add_widget(top_section)
+
+        # Bottom section for buttons and error (2/3 of screen)
+        bottom_section = BoxLayout(orientation='vertical', size_hint=(1, 0.67))
+
+        # Error label
+        self.error_label = Label(
+            text="",
+            color=(1, 0, 0, 1),  # Red color
+            size_hint=(1, 0.2)
+        )
+        bottom_section.add_widget(self.error_label)
+
+        # Buttons
         login_btn = Button(
             text="Login",
             size_hint=(1, 0.2)
         )
         login_btn.bind(on_press=self.login)
 
-        # Back button
         back_btn = Button(
             text="Back",
             size_hint=(1, 0.2)
         )
         back_btn.bind(on_press=self.back_to_menu)
 
-        # Error label (hidden by default)
-        self.error_label = Label(
-            text="",
-            color=(1, 0, 0, 1),  # Red color
-            size_hint=(1, 0.2)
-        )
+        bottom_section.add_widget(login_btn)
+        bottom_section.add_widget(back_btn)
 
-        # Add widgets to layout
-        layout.add_widget(Label(text="Login", font_size=24))
-        layout.add_widget(self.email_input)
-        layout.add_widget(self.password_input)
-        layout.add_widget(login_btn)
-        layout.add_widget(back_btn)
-        layout.add_widget(self.error_label)
+        # Add bottom section to main layout
+        layout.add_widget(bottom_section)
 
         self.add_widget(layout)
 
