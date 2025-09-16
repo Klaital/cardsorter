@@ -15,7 +15,8 @@ try:
     from picamera2 import Picamera2
     from libcamera import controls
     PICAM_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    print(f"Picamera2 not found. Falling back to regular camera. {e}")
     PICAM_AVAILABLE = False
 
 class CatalogScreen(Screen):

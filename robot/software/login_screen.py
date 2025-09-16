@@ -1,30 +1,38 @@
-from kivy.app import App
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
+from kivy.app import App
+from kivy.core.window import Window
 
 class LoginScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.magic_client = App.get_running_app().magic_client
 
+        # Enable keyboard auto popup
+        Window.softinput_mode = 'below_target'
+
         layout = BoxLayout(orientation='vertical', padding=20, spacing=10)
 
-        # Email input
+        # Email input with keyboard focus
         self.email_input = TextInput(
             multiline=False,
             hint_text='Enter email',
-            size_hint=(1, 0.2)
+            size_hint=(1, 0.2),
+            use_bubble=True,  # Enable text bubble
+            use_handles=True  # Enable selection handles
         )
 
-        # Password input
+        # Password input with keyboard focus
         self.password_input = TextInput(
             multiline=False,
             password=True,
             hint_text='Enter password',
-            size_hint=(1, 0.2)
+            size_hint=(1, 0.2),
+            use_bubble=True,  # Enable text bubble
+            use_handles=True  # Enable selection handles
         )
 
         # Login button
