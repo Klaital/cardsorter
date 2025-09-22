@@ -201,8 +201,12 @@ class CardScanner:
         if not lines:
             return None, 0.0
 
-        # Debug print
-        print(f"OCR Result: {lines}")
+        # Debug print original OCR result
+        print(f"Raw OCR Result: {lines}")
+        
+        # Remove rarity symbol from first line if it exists
+        if lines and len(lines[0]) > 1:
+            lines[0] = lines[0][1:]
         
         # Try to identify set code and collector number
         set_code = None
@@ -215,20 +219,26 @@ class CardScanner:
                 # Set codes are typically 3-4 uppercase letters
                 if len(part) in [3, 4] and part.isupper():
                     set_code = part
-                # Collector numbers are typically 1-3 digits, possibly followed by a letter
+                # Collector numbers: remove leading zeros and validate
                 elif part.replace('/', '').isalnum() and any(c.isdigit() for c in part):
-                    collector_number = part
+                    # Remove leading zeros but preserve single zero
+                    cleaned_num = part.lstrip('0')
+                    if not cleaned_num:
+                        cleaned_num = '0'
+                    collector_number = cleaned_num
+
+        # Debug print processed result
+        if set_code or collector_number:
+            print(f"Processed: set={set_code}, number={collector_number}")
 
         if set_code and collector_number:
-            print(f"Found set: {set_code}, number: {collector_number}")
-            
             # Try to find the card in the database
             key = f"{set_code.lower()}-{collector_number}"
             card_info = self.cards_db.get(key)
-            
+
             if card_info:
                 # Calculate confidence based on exact match
                 confidence = 1.0
                 return card_info, confidence
-    
+
         return None, 0.0
