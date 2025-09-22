@@ -84,7 +84,7 @@ class CatalogScreen(Screen):
 
         # Load card database
         try:
-            with open("cards.json", "r", encoding="utf-8") as f:
+            with open("scanner/cards.json", "r", encoding="utf-8") as f:
                 self.cards = json.load(f)
         except FileNotFoundError:
             self.cards = []
