@@ -179,21 +179,12 @@ class CardScanner:
         return image
 
     def detect_card(self, image: Image.Image) -> Tuple[Optional[Dict[str, Any]], float]:
-        """Detect a Magic: The Gathering card in the image.
-
-        Args:
-            image: PIL Image containing the card title
-
-        Returns:
-            Tuple of (card_info, confidence) where:
-                card_info: Dictionary containing card information or None if no match
-                confidence: Float between 0 and 1 indicating match confidence
-        """
+        """Detect a Magic: The Gathering card in the image."""
         # Preprocess the image
         processed = self.preprocess_image(image)
         
         # Extract text using OCR with specific configuration for numbers
-        config = r'--oem 3 --psm 6 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        config = r'--oem 3 --psm 6'  # Remove character whitelist to see what it detects
         text = pytesseract.image_to_string(processed, config=config)
         
         # Clean up the extracted text
@@ -208,10 +199,19 @@ class CardScanner:
         if lines and len(lines[0]) > 1:
             lines[0] = lines[0][1:]
         
+        # Process second line - try different possible middle dot characters
+        if len(lines) > 1:
+            # Common OCR interpretations of middle dot
+            separators = ['·', '•', '°', '.', '*', '-', ':', '|', '+']
+            for sep in separators:
+                if sep in lines[1]:
+                    lines[1] = lines[1].split(sep)[0]
+                    break
+    
         # Try to identify set code and collector number
         set_code = None
         collector_number = None
-        
+
         for line in lines:
             # Split the line into parts
             parts = line.split()
@@ -227,9 +227,9 @@ class CardScanner:
                         cleaned_num = '0'
                     collector_number = cleaned_num
 
-        # Debug print processed result
-        if set_code or collector_number:
-            print(f"Processed: set={set_code}, number={collector_number}")
+        # Debug print what was found in each line
+        print(f"Line contents: {lines}")
+        print(f"Processed: set={set_code}, number={collector_number}")
 
         if set_code and collector_number:
             # Try to find the card in the database
@@ -237,7 +237,6 @@ class CardScanner:
             card_info = self.cards_db.get(key)
 
             if card_info:
-                # Calculate confidence based on exact match
                 confidence = 1.0
                 return card_info, confidence
 
