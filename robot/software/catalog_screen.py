@@ -10,6 +10,7 @@ from PIL import Image as PILImage
 from kivy.clock import Clock
 from kivy.app import App
 import cv2
+from scanner.scanner import CardScanner
 
 # Try importing Picamera2 for Raspberry Pi camera support
 try:
@@ -171,55 +172,41 @@ class CatalogScreen(Screen):
     def submit_action(self, *args):
         """
         Capture camera frame, crop bottom middle third,
-        and display cropped image on screen.
+        and use CardScanner to detect the card.
         """
-        if self.picam:
-            # Capture from Pi camera
-            frame = self.picam.capture_array()
-            pil_img = PILImage.fromarray(frame)
-            self.picam.capture_file('debug.jpg')
-        else:
-            # Capture from regular camera
-            if not self.camera.texture:
-                print("No camera texture available.")
-                return
-            texture = self.camera.texture
-            size = texture.size
-            pixels = texture.pixels
-            pil_img = PILImage.frombytes(mode="RGBA", size=size, data=pixels)
+        try:
+            if self.picam:
+                # Capture from Pi camera
+                frame = self.picam.capture_array()
+                pil_img = PILImage.fromarray(frame)
+            else:
+                # Capture from regular camera
+                if not self.camera.texture:
+                    print("No camera texture available.")
+                    return
+                texture = self.camera.texture
+                size = texture.size
+                pixels = texture.pixels
+                pil_img = PILImage.frombytes(mode="RGBA", size=size, data=pixels)
 
-        # Crop the image
-        W, H = pil_img.size
-        top = int(0.9 * H)
-        bottom = H
-        left = int(W / 3)
-        right = int(2 * W / 3)
+            # Initialize scanner
+            scanner = CardScanner()
 
-        cropped = pil_img.crop((left, top, right, bottom))
-        cropped.save('cropped.png')
-
-        # Convert cropped PIL -> Kivy texture
-#        cropped = cropped.convert("RGBA")
-#        data = cropped.tobytes()
-#        tex = Texture.create(size=cropped.size)
-#        tex.blit_buffer(data, colorfmt="rgba", bufferfmt="ubyte")
-
-#        self.cropped_preview.texture = tex
-
-        # (Placeholder detection until OCR is added)
-        detected_card = "Black Lotus"
-        card_info = self.card_lookup.get(detected_card.lower())
-        if card_info:
-            self.title_label.text = f"Title: {card_info.get('name', 'Unknown')}"
-            self.set_label.text = f"Set: {card_info.get('set_name', 'Unknown')}"
-            self.num_label.text = f"Collector Number: {card_info.get('collector_number', 'N/A')}"
-            price = card_info.get("prices", {}).get("usd") or "N/A"
-            self.price_label.text = f"Price: ${price}"
-        else:
-            self.title_label.text = f"Card not found in database."
-            self.set_label.text = ""
-            self.num_label.text = ""
-            self.price_label.text = ""
+            # Detect card
+            # TODO: remove this debug step
+            pil_img = cv2.imread("scanner/testdata/spm0082_side1.jpg", cv2.IMREAD_UNCHANGED)
+            card_info, confidence = scanner.detect_card(pil_img)
+        
+            # Switch to result screen and display card info
+            app = App.get_running_app()
+            result_screen = app.root.get_screen('card_result')
+            result_screen.display_card(card_info, confidence)
+            self.manager.current = 'card_result'
+        
+        except Exception as e:
+            print(f"Error in card detection: {e}")
+            # Show error on current screen
+            self.title_label.text = f"Error: {str(e)}"
 
     def go_back(self, *args):
         if self.picam:

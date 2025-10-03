@@ -7,6 +7,7 @@ from sort_screen import SortScreen
 from login_screen import LoginScreen
 from library_select_screen import LibrarySelectScreen
 from catalog_screen import CatalogScreen
+from card_result_screen import CardResultScreen
 from magic_client import MagicClient
 from token_manager import TokenManager
 
@@ -50,6 +51,8 @@ class CardSorterApp(App):
             sm.add_widget(LoginScreen(name="login"))
             sm.add_widget(LibrarySelectScreen(name="library_select"))
             sm.add_widget(CatalogScreen(name="catalog"))
+            sm.add_widget(CardResultScreen(name="card_result"))
+            
             return sm
         except Exception as e:
             print(f"Error initializing app: {str(e)}")

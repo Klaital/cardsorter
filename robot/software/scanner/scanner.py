@@ -5,7 +5,7 @@ import pytesseract
 import json
 import os
 from typing import Optional, Dict, Any, Tuple
-from util import card_key
+from .util import card_key
 
 class CardScanner:
     def __init__(self, cards_path: str = None):
