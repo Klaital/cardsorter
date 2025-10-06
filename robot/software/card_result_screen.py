@@ -45,6 +45,9 @@ class CardResultScreen(Screen):
         self.layout.add_widget(button_row)
         self.add_widget(self.layout)
 
+        if 'card_info' in kwargs:
+            self.display_card(kwargs['card_info'], kwargs['confidence'])
+
     def display_card(self, card_info, confidence):
         """Update the display with card information"""
         if card_info:
