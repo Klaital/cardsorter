@@ -2,9 +2,10 @@ import json
 import os
 from datetime import datetime
 from typing import List
+from .localdb import LocalDB
 
 import pytz
-from .bulk_data import BulkDataDescription, Card, cards_from_json_array
+from .bulk_data import BulkDataDescription, Card, cards_from_json_array, Face
 import requests
 import logging
 
@@ -16,6 +17,11 @@ class ScryfallClient:
         os.makedirs(self.images_dir, exist_ok=True)
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(kwargs.get("log_level", logging.DEBUG))
+
+        # Open the local Card DB sqlite3 database
+        self.db_path = os.path.join(root_dir, "cards.sqlite3")
+        self.db = LocalDB(self.db_path)
+        self.db.open()
 
     def load_all_cards_data(self) -> List[Card]:
         self.logger.debug("Loading all cards data...")
@@ -56,32 +62,37 @@ class ScryfallClient:
         if cache_file:
             with open(cache_file, "wb") as f:
                 f.write(response.content)
-
         return response.content
 
     def download_card(self, card: Card):
-        # Choose the image to download
-        if card.image_uris is None:
-            self.logger.warning(f"Card {card.id} has no image URIs.")
-            return
-        if 'png' not in card.image_uris:
-            self.logger.error(f"Card {card.id} has no PNG image URI.")
-            return
+        # Ensure the card is in the database
+        self.db.add_card(card)
+        for face in card.faces:
+            self.download_face(face)
 
-        filename = card.id + ".png"
-        full_path = os.path.join(self.images_dir, filename)
+    def download_face(self, face: Face):
+        full_path = face.compute_local_image_path(self.images_dir)
 
         # Check if the card has already been downloaded
         if os.path.exists(full_path):
-            self.logger.debug(f"Card {card.id} already exists, skipping.")
+            self.db.add_face(face)
             return
 
-        image_url = card.image_uris.get("png")
+        image_url = face.image_uris.get("png")
         if image_url:
-            self.logger.debug(f"Downloading card {card.name} image to {filename}")
+            self.logger.debug(f"Downloading face {face.name} image to {full_path}")
             response = requests.get(image_url)
             if response.status_code == 200:
                 with open(full_path, "wb") as f:
                     f.write(response.content)
+                face.local_image_path = full_path
+                # Compute a hash for the image
+                face.image_hash = face.compute_image_hash()
+
+                # Update the database with this card's data
+                self.db.add_face(face)
+                self.logger.debug(
+                    f"Card face {face.id} image downloaded and added to database."
+                )
             else:
-                raise Exception(f"Failed to download card {card['id']} image: {response.status_code}")
+                raise Exception(f"Failed to download card {face.card_id}, face {face.face_name} image: {response.status_code}")
