@@ -4,7 +4,8 @@ import traceback
 import argparse
 from time import sleep
 
-from scryfall_client import ScryfallClient
+from scryfall import ScryfallClient
+from scryfall.bulk_data import Card
 
 def setup_logging(log_level):
     """Configure logging for the entire application"""
@@ -16,7 +17,6 @@ def setup_logging(log_level):
             logging.FileHandler('scryfall_downloader.log')  # Optional: also log to file
         ]
     )
-
 
 def main():
     parser = argparse.ArgumentParser(description='Download Magic card images from Scryfall')
@@ -38,6 +38,11 @@ def main():
     try:
         print("Downloading images...")
         for card in cards:
+            # Type check to ensure we only process Card objects
+            if not isinstance(card, Card):
+                print(f"Skipping non-Card object: {type(card)} - {card}")
+                continue
+                
             if args.card_id and card.id != args.card_id:
                 continue
             print(f"Downloading {card.id}...")

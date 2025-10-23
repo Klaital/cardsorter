@@ -4,7 +4,6 @@ import cv2
 import os
 
 import dateutil.parser
-from kivy.app import App
 
 
 class BulkDataDescription:
@@ -71,14 +70,25 @@ class Face:
     @property
     def face_name(self):
         """Return the type of face this is. Expect mainly 'front' or 'back'."""
-        uri = self.image_uris.get("normal")
-        if uri:
-            return uri.split("/")[4]
-        else:
-            return self.name
+        uri = self.image_uris.get("png")
+        try:
+            if uri:
+                return uri.split("/")[4]
+            else:
+                return "front"
+        except Exception:
+            # Use a sane default if we can't parse the URI.
+            return "front"
 
     def compute_local_image_path(self, root_dir: str):
-        return os.path.join(root_dir, f"{self.id}.{self.face_name}.png")
+        """Compute the local path to the image file for this face."""
+        if not self.card_id or len(self.card_id) <= 2:
+            raise Exception(f"Invalid card ID: {self.card_id}, {self.name}")
+        return os.path.join(root_dir, self.card_id[0], self.card_id[1], f"{self.card_id}.{self.face_name}.png")
+
+    def compute_alt_image_path(self, root_dir: str):
+        """Compute the local path to the image file for this face."""
+        return os.path.join(root_dir, 'alt', f"{self.id}.png")
 
     def compute_image_hash(self):
         """Load the image from disk and calculate a hash."""
@@ -104,11 +114,25 @@ def cards_from_json_array(json_array) -> List[Card]:
     Returns:
         list[Card]: List of deserialized Card objects
     """
-    cards = [Card(**item) for item in json_array]
-    for card in cards:
-        # Ensure all card faces are tagged with the card ID
-        for face in card.faces:
-            face.card_id = card.id
+    # Iterate over the card data and ensure they're all valid
+    for item in json_array:
+        # Check if item is an object
+        if not isinstance(item, dict):
+            raise ValueError(f"Invalid card type: {item}")
+        if item["object"] != "card":
+            raise ValueError(f"Invalid card data: {item}")
+
+    cards = []
+    for item in json_array:
+        faces = [Face(**face) for face in item.get("card_faces", [])]
+        for face in faces:
+            face.card_id = item["id"]
+        if not faces:
+            # Create a default face for single-sided cards
+            faces = [Face(card_id=item["id"], name=item["name"], image_uris=item["image_uris"])]
+        card = Card(**item)
+        card.faces = faces
+        cards.append(card)
 
     return cards
 
