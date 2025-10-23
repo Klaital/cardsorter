@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 from typing import List
+import time
 
 import pytz
 from .bulk_data import BulkDataDescription, Card, cards_from_json_array, Face
@@ -16,11 +17,27 @@ class ScryfallClient:
         os.makedirs(self.images_dir, exist_ok=True)
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(kwargs.get("log_level", logging.DEBUG))
+        
+        # Telemetry tracking for downloads
+        self.download_start_time = None
+        self.downloads_completed = 0
 
         # Open the local Card DB sqlite3 database
         # self.db_path = os.path.join(root_dir, "cards.sqlite3")
         # self.db = LocalDB(self.db_path)
         # self.db.open()
+
+    def start_download_tracking(self):
+        """Initialize download tracking for telemetry"""
+        self.download_start_time = time.time()
+        self.downloads_completed = 0
+
+    def get_download_rate(self):
+        """Calculate current download rate in cards per second"""
+        if self.download_start_time is None or self.downloads_completed == 0:
+            return 0.0
+        elapsed_time = time.time() - self.download_start_time
+        return self.downloads_completed / elapsed_time if elapsed_time > 0 else 0.0
 
     def load_all_cards_data(self) -> (List[Card], bool):
         self.logger.debug("Loading all cards data...")
@@ -65,11 +82,28 @@ class ScryfallClient:
                 f.write(response.content)
         return response.content
 
-    def download_card(self, card: Card):
+    def download_card(self, card: Card, telemetry_batcher=None):
         # Ensure the card is in the database
         # self.db.add_card(card)
+        card_downloaded = False
         for face in card.faces:
-            self.download_face(face)
+            face_was_downloaded = self.download_face(face)
+            if face_was_downloaded:
+                card_downloaded = True
+        
+        if card_downloaded:
+            self.downloads_completed += 1
+            if telemetry_batcher:
+                # Track the download
+                telemetry_batcher.increment("downloaded")
+                
+                # Calculate and track download rate
+                current_rate = self.get_download_rate()
+                if current_rate > 0:
+                    # Send rate as a gauge metric
+                    telemetry_batcher.write_gauge("download_rate", "cards_per_second", current_rate)
+        
+        return card_downloaded
 
     def download_face(self, face: Face):
         full_path = face.compute_local_image_path(self.images_dir)
@@ -78,7 +112,7 @@ class ScryfallClient:
         # Check if the card has already been downloaded
         if os.path.exists(full_path):
             # self.db.add_face(face)
-            return
+            return False
 
         # Check if the card was downloaded previously
         alt_path = face.compute_alt_image_path(self.images_dir)
@@ -87,11 +121,11 @@ class ScryfallClient:
             face.local_image_path = alt_path
             face.image_hash = face.compute_image_hash()
             # self.db.add_face(face)
-            return
+            return False
 
         image_url = face.image_uris.get("png")
         if image_url:
-            self.logger.debug(f"Downloading face {face.name} image to {full_path}")
+            self.logger.info(f"Downloading face {face.name} image to {full_path}")
             response = requests.get(image_url)
             if response.status_code == 200:
                 with open(full_path, "wb") as f:
@@ -105,8 +139,15 @@ class ScryfallClient:
                 self.logger.debug(
                     f"Card face {face.id} image downloaded and added to database."
                 )
+                return True
             else:
                 raise Exception(f"Failed to download card {face.card_id}, face {face.face_name} image: {response.status_code}")
+        return False
+
+    def list_sets(self):
+        response = requests.get("https://api.scryfall.com/sets")
+        response.raise_for_status()
+        return response.json()["data"]
 
 def ensure_dir_exists(path):
     os.makedirs(path, exist_ok=True)

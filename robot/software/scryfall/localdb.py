@@ -1,6 +1,7 @@
 from .bulk_data import Card, Face
 import os
 import sqlite3
+import logging
 
 class LocalDB:
     def __init__(self, db_path: str):
@@ -113,8 +114,20 @@ class LocalDB:
         ))
         self.conn.commit()
 
-    def get_missing_faces(self):
+    def get_missing_faces(self, scryfall_ids: list[str]=None):
+        # Make sure all batches are flushed before querying
+        if scryfall_ids is None:
+            scryfall_ids = []
+        self.flush_batches()
+        query = '''SELECT card_id FROM faces WHERE image_hash = ""'''
+        if scryfall_ids:
+            query += f" AND card_id IN ({','.join(['?'] * len(scryfall_ids))})"
+        self.cursor.execute(query, scryfall_ids)
+        return self.cursor.fetchall()
+
+    def get_missing_faces_by_set(self, set_id: str):
         # Make sure all batches are flushed before querying
         self.flush_batches()
-        self.cursor.execute('''SELECT card_id FROM faces WHERE image_hash IS NULL''')
+        query = '''SELECT cards.scryfall_id FROM cards JOIN faces ON cards.scryfall_id = faces.card_id WHERE cards.setid = ? AND faces.image_hash = ""'''
+        self.cursor.execute(query, (set_id,))
         return self.cursor.fetchall()
