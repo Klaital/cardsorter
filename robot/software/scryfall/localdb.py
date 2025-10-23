@@ -7,6 +7,9 @@ class LocalDB:
         self.db_path = db_path
         self.conn = None
         self.cursor = None
+        self._batch_size = 1000
+        self._pending_cards = []
+        self._pending_faces = []
 
     def open(self):
         if not os.path.exists(self.db_path):
@@ -14,6 +17,12 @@ class LocalDB:
         else:
             self.conn = sqlite3.connect(self.db_path)
             self.cursor = self.conn.cursor()
+        
+        # Performance optimizations
+        self.cursor.execute("PRAGMA journal_mode = WAL")
+        self.cursor.execute("PRAGMA synchronous = NORMAL")
+        self.cursor.execute("PRAGMA cache_size = 10000")
+        self.cursor.execute("PRAGMA temp_store = MEMORY")
 
     def create_db(self):
         self.conn = sqlite3.connect(self.db_path)
@@ -47,21 +56,56 @@ class LocalDB:
               ''')
         self.conn.commit()
 
-
     def close(self):
-        self.conn.close()
+        # Flush any pending batches before closing
+        self.flush_batches()
+        if self.conn:
+            self.conn.close()
         self.cursor = None
         self.conn = None
 
     def add_card(self, card: Card):
-        self.cursor.execute('''
-                            INSERT INTO cards (name, scryfall_id, setid, collector_num)
-                            VALUES (?, ?, ?, ?)''', (
-                                card.name, card.id, card.set_code, card.collector_number
-                            ))
-        self.conn.commit()
+        self._pending_cards.append((card.name, card.id, card.set_code, card.collector_number))
+        
+        if len(self._pending_cards) >= self._batch_size:
+            self._flush_cards()
 
     def add_face(self, face: Face):
+        self._pending_faces.append((
+            face.card_id, face.face_name, face.image_uris.get("png"), 
+            face.local_image_path, face.image_hash
+        ))
+        
+        if len(self._pending_faces) >= self._batch_size:
+            self._flush_faces()
+
+    def _flush_cards(self):
+        if not self._pending_cards:
+            return
+        
+        self.cursor.executemany('''
+            INSERT INTO cards (name, scryfall_id, setid, collector_num)
+            VALUES (?, ?, ?, ?)''', self._pending_cards)
+        self._pending_cards.clear()
+
+    def _flush_faces(self):
+        if not self._pending_faces:
+            return
+        
+        self.cursor.executemany('''
+            INSERT OR REPLACE INTO faces (card_id, face_name, image_uri_png, image_path_png, image_hash)
+            VALUES (?, ?, ?, ?, ?)''', self._pending_faces)
+        self._pending_faces.clear()
+
+    def flush_batches(self):
+        """Manually flush all pending batches and commit"""
+        self._flush_cards()
+        self._flush_faces()
+        if self.conn:
+            self.conn.commit()
+
+    def upsert_face(self, face: Face):
+        # For individual upserts (like during downloads), still use immediate execution
         self.cursor.execute('''
             INSERT OR REPLACE INTO faces (card_id, face_name, image_uri_png, image_path_png, image_hash)
             VALUES (?, ?, ?, ?, ?)''', (
@@ -70,5 +114,7 @@ class LocalDB:
         self.conn.commit()
 
     def get_missing_faces(self):
+        # Make sure all batches are flushed before querying
+        self.flush_batches()
         self.cursor.execute('''SELECT card_id FROM faces WHERE image_hash IS NULL''')
         return self.cursor.fetchall()
