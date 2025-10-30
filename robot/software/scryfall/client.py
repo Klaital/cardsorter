@@ -82,45 +82,28 @@ class ScryfallClient:
                 f.write(response.content)
         return response.content
 
-    def download_card(self, card: Card, telemetry_batcher=None):
-        # Ensure the card is in the database
-        # self.db.add_card(card)
+    def download_card(self, card: Card):
         card_downloaded = False
         for face in card.faces:
             face_was_downloaded = self.download_face(face)
             if face_was_downloaded:
                 card_downloaded = True
+                # Wait a bit between downloads so Scryfall isn't getting spammed
+                time.sleep(0.2)
         
         if card_downloaded:
             self.downloads_completed += 1
-            if telemetry_batcher:
-                # Track the download
-                telemetry_batcher.increment("downloaded")
-                
-                # Calculate and track download rate
-                current_rate = self.get_download_rate()
-                if current_rate > 0:
-                    # Send rate as a gauge metric
-                    telemetry_batcher.write_gauge("download_rate", "cards_per_second", current_rate)
-        
+
         return card_downloaded
 
     def download_face(self, face: Face):
-        full_path = face.compute_local_image_path(self.images_dir)
+        full_path = face.compute_set_image_path(self.images_dir)
         ensure_dir_exists(os.path.dirname(full_path))
 
         # Check if the card has already been downloaded
         if os.path.exists(full_path):
-            # self.db.add_face(face)
-            return False
-
-        # Check if the card was downloaded previously
-        alt_path = face.compute_alt_image_path(self.images_dir)
-        if os.path.exists(alt_path):
-            self.logger.debug(f"Card face {face.id} image already exists at {alt_path}")
-            face.local_image_path = alt_path
+            face.local_image_path = full_path
             face.image_hash = face.compute_image_hash()
-            # self.db.add_face(face)
             return False
 
         image_url = face.image_uris.get("png")

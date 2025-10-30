@@ -88,7 +88,11 @@ class Face:
 
     def compute_alt_image_path(self, root_dir: str):
         """Compute the local path to the image file for this face."""
-        return os.path.join(root_dir, 'alt', f"{self.id}.png")
+        return os.path.join(root_dir, 'alt', f"{self.card_id}.png")
+
+    def compute_set_image_path(self, set_code:str, root_dir: str):
+        """Compute the local path to the image file for this face."""
+        return os.path.join(root_dir, 'set', set_code, f"{self.card_id}.{self.face_name}.png")
 
     def compute_image_hash(self):
         """Load the image from disk and calculate a hash."""

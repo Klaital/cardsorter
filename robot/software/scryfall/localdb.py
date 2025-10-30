@@ -1,7 +1,6 @@
 from .bulk_data import Card, Face
 import os
 import sqlite3
-import logging
 
 class LocalDB:
     def __init__(self, db_path: str):
@@ -128,6 +127,28 @@ class LocalDB:
     def get_missing_faces_by_set(self, set_id: str):
         # Make sure all batches are flushed before querying
         self.flush_batches()
-        query = '''SELECT cards.scryfall_id FROM cards JOIN faces ON cards.scryfall_id = faces.card_id WHERE cards.setid = ? AND faces.image_hash = ""'''
+        query = '''SELECT DISTINCT(cards.scryfall_id) FROM cards JOIN faces ON cards.scryfall_id = faces.card_id WHERE cards.setid = ? AND faces.image_hash = ""'''
         self.cursor.execute(query, (set_id,))
         return self.cursor.fetchall()
+
+    def get_faces_with_download(self):
+        # Make sure all batches are flushed before querying
+        self.flush_batches()
+        query = '''SELECT faces.id, cards.setid FROM faces JOIN cards ON cards.scryfall_id = faces.card_id WHERE faces.image_path_png not LIKE "%set%"'''
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+
+    def get_face(self, face_id) -> Face:
+        self.cursor.execute('''
+            SELECT id, card_id, face_name, image_uri_png, image_path_png, image_hash FROM faces WHERE id = ?''', (face_id,))
+        row = self.cursor.fetchone()
+        if row:
+            return Face(
+                id=row[0],
+                card_id=row[1],
+                name=row[2],
+                image_uris={"png": row[3]},
+                local_image_path=row[4],
+                image_hash=row[5]
+            )
+        raise Exception(f"Face {face_id} not found")
