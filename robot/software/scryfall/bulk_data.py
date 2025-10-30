@@ -18,6 +18,7 @@ class BulkDataDescription:
         self.size = kwargs.get("size", "")
         self.content_type = kwargs.get("content_type", "")
         self.content_encoding = kwargs.get("content_encoding", "")
+        self.lang = kwargs.get("lang", "")
 
     @property
     def updated_at(self) -> str:

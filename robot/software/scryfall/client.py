@@ -85,7 +85,7 @@ class ScryfallClient:
     def download_card(self, card: Card):
         card_downloaded = False
         for face in card.faces:
-            face_was_downloaded = self.download_face(face)
+            face_was_downloaded = self.download_face(face, card.set_code)
             if face_was_downloaded:
                 card_downloaded = True
                 # Wait a bit between downloads so Scryfall isn't getting spammed
@@ -96,8 +96,8 @@ class ScryfallClient:
 
         return card_downloaded
 
-    def download_face(self, face: Face):
-        full_path = face.compute_set_image_path(self.images_dir)
+    def download_face(self, face: Face, set_id: str):
+        full_path = face.compute_set_image_path(set_id, self.images_dir)
         ensure_dir_exists(os.path.dirname(full_path))
 
         # Check if the card has already been downloaded
