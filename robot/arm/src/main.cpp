@@ -29,23 +29,43 @@ void setup(){
     go_home(2000); // 机械臂回到初始位置
     delay(3000);
     Serial.println("start...");
+    // Pump_on();
+    delay(400);
 }
 
 bool start_en = true;
 void loop(){
-    if(start_en){
-        Pump_on();
-        delay(400);
-        source.pick();
-        stack4.place();
+    if (Serial.available() > 6) {
+        String data = Serial.readStringUntil('\n');
+        Serial.print("Recieved command: '");
+        Serial.print(data);
+        Serial.println("'");
+        if (data == "stack1") {
+            Serial.println("Moving card to stack1");
+            source.pick();
+            stack1.place();
+        }
+        if (data == "stack2") {
+            Serial.println("Moving card to stack2");
+            source.pick();
+            stack2.place();
+        }
+        if (data == "stack3") {
+            Serial.println("Moving card to stack3");
+            source.pick();
+            stack3.place();
+        }
+        if (data == "stack4") {
+            Serial.println("Moving card to stack4");
+            source.pick();
+            stack4.place();
+        }
 
         // Reset back to origin
-        delay(5000);
-        go_home(500);
+        // delay(1000);
+        // go_home(500);
 
-        start_en = false;
-    }
-    else{
+    } else {
         delay(500); // 延时500毫秒
     }
 }
