@@ -17,12 +17,29 @@ class LocalDB:
         else:
             self.conn = sqlite3.connect(self.db_path)
             self.cursor = self.conn.cursor()
+            # Check if we need to migrate the database
+            self._migrate_db()
         
         # Performance optimizations
         self.cursor.execute("PRAGMA journal_mode = WAL")
         self.cursor.execute("PRAGMA synchronous = NORMAL")
         self.cursor.execute("PRAGMA cache_size = 10000")
         self.cursor.execute("PRAGMA temp_store = MEMORY")
+
+    def _migrate_db(self):
+        """Check if lang column exists and add it if not"""
+        try:
+            # Check if lang column exists
+            self.cursor.execute("PRAGMA table_info(cards)")
+            columns = [column[1] for column in self.cursor.fetchall()]
+            
+            if 'lang' not in columns:
+                print("Adding 'lang' column to cards table...")
+                self.cursor.execute("ALTER TABLE cards ADD COLUMN lang TEXT DEFAULT 'en'")
+                self.conn.commit()
+                print("Database migration completed.")
+        except sqlite3.Error as e:
+            print(f"Error during database migration: {e}")
 
     def create_db(self):
         self.conn = sqlite3.connect(self.db_path)
@@ -36,11 +53,13 @@ class LocalDB:
                   name          TEXT,
                   scryfall_id   TEXT,
                   setid         TEXT,
-                  collector_num TEXT
+                  collector_num TEXT,
+                  lang          TEXT DEFAULT 'en'
               );
               CREATE INDEX idx_setid ON cards (setid, collector_num);
               CREATE INDEX idx_name ON cards (name);
               CREATE INDEX idx_id ON cards (scryfall_id);
+              CREATE INDEX idx_lang ON cards (lang);
               CREATE TABLE faces
               (
                   id             INTEGER PRIMARY KEY,
@@ -65,7 +84,9 @@ class LocalDB:
         self.conn = None
 
     def add_card(self, card: Card):
-        self._pending_cards.append((card.name, card.id, card.set_code, card.collector_number))
+        # Get language from card object, default to 'en' if not available
+        lang = getattr(card, 'lang', 'en')
+        self._pending_cards.append((card.name, card.id, card.set_code, card.collector_number, lang))
         
         if len(self._pending_cards) >= self._batch_size:
             self._flush_cards()
@@ -84,8 +105,8 @@ class LocalDB:
             return
         
         self.cursor.executemany('''
-            INSERT INTO cards (name, scryfall_id, setid, collector_num)
-            VALUES (?, ?, ?, ?)''', self._pending_cards)
+            INSERT INTO cards (name, scryfall_id, setid, collector_num, lang)
+            VALUES (?, ?, ?, ?, ?)''', self._pending_cards)
         self._pending_cards.clear()
 
     def _flush_faces(self):
@@ -152,3 +173,10 @@ class LocalDB:
                 image_hash=row[5]
             )
         raise Exception(f"Face {face_id} not found")
+
+    def get_cards_by_language(self, lang: str):
+        """Get all cards for a specific language"""
+        self.flush_batches()
+        query = '''SELECT id, name, scryfall_id, setid, collector_num, lang FROM cards WHERE lang = ?'''
+        self.cursor.execute(query, (lang,))
+        return self.cursor.fetchall()
