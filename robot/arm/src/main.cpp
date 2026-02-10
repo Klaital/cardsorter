@@ -23,7 +23,8 @@ void setup(){
     Buzzer_init();
     ESPMax_init();
     Nozzle_init();
-    Serial.begin(921600);
+    // Serial.begin(921600);
+    Serial.begin(9600);
     delay(3000);
     Serial.println("Reset to home...");
     go_home(2000); // 机械臂回到初始位置
@@ -40,30 +41,31 @@ void loop(){
         Serial.print("Recieved command: '");
         Serial.print(data);
         Serial.println("'");
-        if (data == "stack1") {
-            Serial.println("Moving card to stack1");
-            source.pick();
-            stack1.place();
-        }
-        if (data == "stack2") {
-            Serial.println("Moving card to stack2");
-            source.pick();
-            stack2.place();
-        }
-        if (data == "stack3") {
-            Serial.println("Moving card to stack3");
-            source.pick();
-            stack3.place();
-        }
-        if (data == "stack4") {
-            Serial.println("Moving card to stack4");
-            source.pick();
-            stack4.place();
-        }
+        // if (data == "stack1") {
+        //     Serial.println("Moving card to stack1");
+        //     source.pick();
+        //     stack1.place();
+        // }
+        // if (data == "stack2") {
+        //     Serial.println("Moving card to stack2");
+        //     source.pick();
+        //     stack2.place();
+        // }
+        // if (data == "stack3") {
+        //     Serial.println("Moving card to stack3");
+        //     source.pick();
+        //     stack3.place();
+        // }
+        // if (data == "stack4") {
+        //     Serial.println("Moving card to stack4");
+        //     source.pick();
+        //     stack4.place();
+        // }
 
-        // Reset back to origin
-        // delay(1000);
-        // go_home(500);
+        source.pick();
+        stack1.place();
+        go_home(2000);
+
 
     } else {
         delay(500); // 延时500毫秒

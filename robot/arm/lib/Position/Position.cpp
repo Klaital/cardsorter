@@ -53,6 +53,7 @@ void Position::place() {
     copy_pos(this->pos_base, pos);
     pos[2] = OVERHEAD_HEIGHT;
     set_position(pos, MOVEMENT_SPEED);
+    // TODO: rotate head to match the stack's offset
     delay(MOVEMENT_SPEED+MOVEMENT_LAG);
     pos[2] = TABLE_HEIGHT+(static_cast<float>(this->card_count)*DEFAULT_CARD_THICKNESS);
     set_position(pos, MOVEMENT_SPEED);
