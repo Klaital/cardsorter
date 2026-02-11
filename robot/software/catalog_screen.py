@@ -1,4 +1,6 @@
 import json
+import os
+from datetime import datetime
 
 import numpy as np
 from kivy.uix.screenmanager import Screen
@@ -26,6 +28,10 @@ except ImportError as e:
 class CatalogScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        
+        # Create directory for saved card images if it doesn't exist
+        self.save_directory = "captured_cards"
+        os.makedirs(self.save_directory, exist_ok=True)
         
         # Main layout
         self.layout = BoxLayout(orientation='horizontal', spacing=10, padding=10)
@@ -80,19 +86,24 @@ class CatalogScreen(Screen):
         self.picam = None
         self.setup_camera()
         
-        # Camera view
-        camera_container = BoxLayout(size_hint=(1, 0.6))
-        camera_container.add_widget(self.camera)
-        right_panel.add_widget(camera_container)
-        
         # Card preview window
-        preview_container = BoxLayout(orientation='vertical', size_hint=(1, 0.4))
-        preview_label = Label(text="Detected Card:", size_hint=(1, 0.2), font_size=16)
+        preview_container = BoxLayout(orientation='vertical', size_hint=(1, 0.7))
+        preview_label = Label(text="Detected Card:", size_hint=(1, 0.1), font_size=16)
         preview_container.add_widget(preview_label)
         
-        self.card_preview = Image(size_hint=(1, 0.8))
+        self.card_preview = Image(size_hint=(1, 0.9))
         preview_container.add_widget(self.card_preview)
         right_panel.add_widget(preview_container)
+        
+        # Camera view (now at bottom and smaller)
+        camera_container = BoxLayout(orientation='vertical', size_hint=(1, 0.3))
+        camera_label = Label(text="Camera View:", size_hint=(1, 0.1), font_size=14)
+        camera_container.add_widget(camera_label)
+        
+        camera_view_container = BoxLayout(size_hint=(1, 0.9))
+        camera_view_container.add_widget(self.camera)
+        camera_container.add_widget(camera_view_container)
+        right_panel.add_widget(camera_container)
 
         # Add panels to main layout
         self.layout.add_widget(left_panel)
@@ -188,44 +199,138 @@ class CatalogScreen(Screen):
         best_contour = max(valid_contours, key=lambda x: x[1])
         return best_contour[0], best_contour[2]
 
+    def order_points(self, pts):
+        """Order points for perspective transformation: top-left, top-right, bottom-right, bottom-left"""
+        rect = np.zeros((4, 2), dtype="float32")
+        
+        # Sum and difference to find corners
+        s = pts.sum(axis=1)
+        diff = np.diff(pts, axis=1)
+        
+        # Top-left has smallest sum, bottom-right has largest sum
+        rect[0] = pts[np.argmin(s)]
+        rect[2] = pts[np.argmax(s)]
+        
+        # Top-right has smallest difference, bottom-left has largest difference
+        rect[1] = pts[np.argmin(diff)]
+        rect[3] = pts[np.argmax(diff)]
+        
+        return rect
+
     def crop_card_from_contour(self, pil_image: PILImage.Image, contour):
-        """Extract the card region from the image using the detected contour.
+        """Extract the card region from the image using perspective transformation.
         
         Args:
             pil_image: PIL Image to crop from
             contour: OpenCV contour of the detected card
             
         Returns:
-            PIL Image of the cropped card, or None if cropping fails
+            PIL Image of the cropped and perspective-corrected card, or None if cropping fails
         """
         if contour is None:
             return None
             
         try:
-            # Get bounding rectangle
-            x, y, w, h = cv2.boundingRect(contour)
+            # Convert PIL to OpenCV
+            cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
             
-            # Add some padding
-            padding = 10
-            x = max(0, x - padding)
-            y = max(0, y - padding)
-            w = min(pil_image.width - x, w + 2 * padding)
-            h = min(pil_image.height - y, h + 2 * padding)
+            # Approximate the contour to get corner points
+            epsilon = 0.02 * cv2.arcLength(contour, True)
+            approx = cv2.approxPolyDP(contour, epsilon, True)
             
-            # Crop the image
-            cropped = pil_image.crop((x, y, x + w, y + h))
+            # If we have exactly 4 points, use them for perspective transform
+            if len(approx) == 4:
+                # Reshape and convert to float32
+                src_pts = approx.reshape(4, 2).astype("float32")
+                
+                # Order the points
+                src_pts = self.order_points(src_pts)
+                
+                # Define the dimensions for the output card (much larger)
+                # Magic cards are 2.5" x 3.5" (aspect ratio ~0.714)
+                card_width = 400  # Increased from 250
+                card_height = int(card_width / 0.714)  # ~560
+                
+                # Define destination points for the perspective transform
+                dst_pts = np.array([
+                    [0, 0],                           # top-left
+                    [card_width - 1, 0],              # top-right
+                    [card_width - 1, card_height - 1], # bottom-right
+                    [0, card_height - 1]              # bottom-left
+                ], dtype="float32")
+                
+                # Calculate perspective transform matrix
+                M = cv2.getPerspectiveTransform(src_pts, dst_pts)
+                
+                # Apply perspective transform
+                warped = cv2.warpPerspective(cv_image, M, (card_width, card_height))
+                
+                # Convert back to PIL
+                warped_pil = PILImage.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
+                
+                return warped_pil
             
-            # Resize to a standard preview size while maintaining aspect ratio
-            target_width = 200
-            aspect_ratio = cropped.height / cropped.width
-            target_height = int(target_width * aspect_ratio)
-            
-            cropped = cropped.resize((target_width, target_height), PILImage.Resampling.LANCZOS)
-            
-            return cropped
+            else:
+                # Fall back to bounding rectangle if we don't have exactly 4 corners
+                x, y, w, h = cv2.boundingRect(contour)
+                
+                # Minimal padding (just 2-3 pixels)
+                padding = 3
+                x = max(0, x - padding)
+                y = max(0, y - padding)
+                w = min(pil_image.width - x, w + 2 * padding)
+                h = min(pil_image.height - y, h + 2 * padding)
+                
+                # Crop using bounding rectangle
+                cropped = pil_image.crop((x, y, x + w, y + h))
+                
+                # Resize to larger standard card dimensions while maintaining aspect ratio
+                target_width = 400  # Increased from 250
+                aspect_ratio = cropped.height / cropped.width
+                target_height = int(target_width * aspect_ratio)
+                
+                cropped = cropped.resize((target_width, target_height), PILImage.Resampling.LANCZOS)
+                
+                return cropped
             
         except Exception as e:
             print(f"Error cropping card: {e}")
+            return None
+
+    def save_cropped_card(self, cropped_image: PILImage.Image, card_info=None):
+        """Save the cropped card image to disk with timestamp and card info.
+        
+        Args:
+            cropped_image: PIL Image of the cropped card
+            card_info: Optional card information from recognition
+            
+        Returns:
+            str: Path to saved file
+        """
+        try:
+            # Create timestamp for unique filename
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # Create filename based on card info if available
+            if card_info and 'name' in card_info:
+                # Clean up card name for filename (remove invalid characters)
+                card_name = str(card_info['name']).replace('/', '_').replace('\\', '_').replace(':', '_')
+                card_name = ''.join(c for c in card_name if c.isalnum() or c in (' ', '-', '_')).strip()
+                filename = f"{timestamp}_{card_name}.png"
+            else:
+                filename = f"{timestamp}_unknown_card.png"
+            
+            # Full path
+            filepath = os.path.join(self.save_directory, filename)
+            
+            # Save the image as PNG (lossless compression)
+            cropped_image.save(filepath, "PNG", optimize=True)
+            
+            print(f"Cropped card image saved to: {filepath}")
+            return filepath
+            
+        except Exception as e:
+            print(f"Error saving cropped card image: {e}")
             return None
 
     def draw_card_bounds(self, pil_image: PILImage.Image) -> PILImage.Image:
@@ -251,8 +356,17 @@ class CatalogScreen(Screen):
             x, y, w, h = bounding_rect
             cv2.rectangle(cv_image, (x, y), (x + w, y + h), (0, 255, 0), 3)
             
-            # Draw contour outline
+            # Draw contour outline in yellow
             cv2.drawContours(cv_image, [contour], -1, (0, 255, 255), 2)
+            
+            # If we can approximate to 4 corners, draw corner points
+            epsilon = 0.02 * cv2.arcLength(contour, True)
+            approx = cv2.approxPolyDP(contour, epsilon, True)
+            
+            if len(approx) == 4:
+                # Draw corner points in red
+                for point in approx:
+                    cv2.circle(cv_image, tuple(point[0]), 8, (0, 0, 255), -1)
         else:
             self.last_card_contour = None
 
@@ -353,7 +467,7 @@ class CatalogScreen(Screen):
     def submit_action(self, *args):
         """
         Capture camera frame and use CardScanner to detect the card.
-        If a card contour was detected, use the cropped card for recognition.
+        If a card contour was detected, use the cropped card for recognition and save it to disk.
         """
         try:
             if self.picam:
@@ -374,6 +488,8 @@ class CatalogScreen(Screen):
 
             # Use the cropped card if available, otherwise use full image
             image_to_scan = pil_img
+            cropped_card = None
+            
             if self.last_card_contour is not None:
                 cropped_card = self.crop_card_from_contour(pil_img.convert('RGB'), self.last_card_contour)
                 if cropped_card:
@@ -384,6 +500,16 @@ class CatalogScreen(Screen):
 
             # Detect card
             card_info, confidence = scanner.detect_card(image_to_scan)
+            
+            # Save the cropped card image if we have one
+            if cropped_card:
+                saved_path = self.save_cropped_card(cropped_card, card_info)
+                if saved_path:
+                    print(f"Card image saved successfully to {saved_path}")
+                else:
+                    print("Failed to save card image")
+            else:
+                print("No cropped card available to save")
         
             # Switch to result screen and display card info
             app = App.get_running_app()
