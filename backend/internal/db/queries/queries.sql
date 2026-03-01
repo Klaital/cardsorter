@@ -55,3 +55,13 @@ WHERE id = ?;
 -- name: DeleteCard :exec
 DELETE FROM cards
 WHERE id = ?;
+
+-- name: IncrementCardCount :exec
+UPDATE cards
+SET qty = qty + 1
+WHERE id = ?;
+
+-- name: UpdateCard :exec
+UPDATE cards
+SET name=?, usd=?
+WHERE id=?;

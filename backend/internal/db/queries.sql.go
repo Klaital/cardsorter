@@ -242,6 +242,17 @@ func (q *Queries) GetUser(ctx context.Context, email string) (User, error) {
 	return i, err
 }
 
+const incrementCardCount = `-- name: IncrementCardCount :exec
+UPDATE cards
+SET qty = qty + 1
+WHERE id = ?
+`
+
+func (q *Queries) IncrementCardCount(ctx context.Context, id int64) error {
+	_, err := q.exec(ctx, q.incrementCardCountStmt, incrementCardCount, id)
+	return err
+}
+
 const moveCard = `-- name: MoveCard :exec
 UPDATE cards
 SET library_id = ?
@@ -255,5 +266,22 @@ type MoveCardParams struct {
 
 func (q *Queries) MoveCard(ctx context.Context, arg MoveCardParams) error {
 	_, err := q.exec(ctx, q.moveCardStmt, moveCard, arg.LibraryID, arg.ID)
+	return err
+}
+
+const updateCard = `-- name: UpdateCard :exec
+UPDATE cards
+SET name=?, usd=?
+WHERE id=?
+`
+
+type UpdateCardParams struct {
+	Name string `json:"name"`
+	Usd  int32  `json:"usd"`
+	ID   int64  `json:"id"`
+}
+
+func (q *Queries) UpdateCard(ctx context.Context, arg UpdateCardParams) error {
+	_, err := q.exec(ctx, q.updateCardStmt, updateCard, arg.Name, arg.Usd, arg.ID)
 	return err
 }

@@ -20,7 +20,9 @@ type Querier interface {
 	GetLibraries(ctx context.Context, userID int64) ([]GetLibrariesRow, error)
 	GetLibrary(ctx context.Context, arg GetLibraryParams) (Library, error)
 	GetUser(ctx context.Context, email string) (User, error)
+	IncrementCardCount(ctx context.Context, id int64) error
 	MoveCard(ctx context.Context, arg MoveCardParams) error
+	UpdateCard(ctx context.Context, arg UpdateCardParams) error
 }
 
 var _ Querier = (*Queries)(nil)

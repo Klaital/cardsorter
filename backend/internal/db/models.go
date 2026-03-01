@@ -6,7 +6,18 @@ package db
 
 import (
 	"database/sql"
+	"time"
 )
+
+type AllCard struct {
+	ID         uint64 `json:"id"`
+	ScryfallID []byte `json:"scryfall_id"`
+	Lang       string `json:"lang"`
+	Layout     string `json:"layout"`
+	SetName    string `json:"set_name"`
+	Digital    bool   `json:"digital"`
+	Rarity     string `json:"rarity"`
+}
 
 type Card struct {
 	ID           int64        `json:"id"`
@@ -22,12 +33,47 @@ type Card struct {
 	Qty          uint32       `json:"qty"`
 }
 
+type CardFace struct {
+	ID                    uint64         `json:"id"`
+	CardID                int64          `json:"card_id"`
+	FlavorText            sql.NullString `json:"flavor_text"`
+	Layout                sql.NullString `json:"layout"`
+	Name                  string         `json:"name"`
+	OriginalImageUriPng   sql.NullString `json:"original_image_uri_png"`
+	OriginalImageUriLarge sql.NullString `json:"original_image_uri_large"`
+}
+
+type CardPrice struct {
+	ID        uint64        `json:"id"`
+	CardID    int64         `json:"card_id"`
+	Usd       sql.NullInt32 `json:"usd"`
+	UsdFoil   sql.NullInt32 `json:"usd_foil"`
+	UsdEtched sql.NullInt32 `json:"usd_etched"`
+	Eur       sql.NullInt32 `json:"eur"`
+	EurFoil   sql.NullInt32 `json:"eur_foil"`
+	Tix       sql.NullInt32 `json:"tix"`
+}
+
 type Library struct {
 	ID        int64        `json:"id"`
 	UserID    int64        `json:"user_id"`
 	Name      string       `json:"name"`
 	CreatedAt sql.NullTime `json:"created_at"`
 	UpdatedAt sql.NullTime `json:"updated_at"`
+}
+
+type ScryfallBulk struct {
+	ID                    uint32       `json:"id"`
+	ScryfallID            []byte       `json:"scryfall_id"`
+	ScryfallType          string       `json:"scryfall_type"`
+	UpdatedAt             time.Time    `json:"updated_at"`
+	Uri                   string       `json:"uri"`
+	Size                  int32        `json:"size"`
+	DownloadUri           string       `json:"download_uri"`
+	ContentType           string       `json:"content_type"`
+	ContentEncoding       string       `json:"content_encoding"`
+	ProcessingStartedAt   sql.NullTime `json:"processing_started_at"`
+	ProcessingCompletedAt sql.NullTime `json:"processing_completed_at"`
 }
 
 type User struct {

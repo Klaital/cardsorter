@@ -54,8 +54,14 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserStmt, err = db.PrepareContext(ctx, getUser); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUser: %w", err)
 	}
+	if q.incrementCardCountStmt, err = db.PrepareContext(ctx, incrementCardCount); err != nil {
+		return nil, fmt.Errorf("error preparing query IncrementCardCount: %w", err)
+	}
 	if q.moveCardStmt, err = db.PrepareContext(ctx, moveCard); err != nil {
 		return nil, fmt.Errorf("error preparing query MoveCard: %w", err)
+	}
+	if q.updateCardStmt, err = db.PrepareContext(ctx, updateCard); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateCard: %w", err)
 	}
 	return &q, nil
 }
@@ -112,9 +118,19 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getUserStmt: %w", cerr)
 		}
 	}
+	if q.incrementCardCountStmt != nil {
+		if cerr := q.incrementCardCountStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing incrementCardCountStmt: %w", cerr)
+		}
+	}
 	if q.moveCardStmt != nil {
 		if cerr := q.moveCardStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing moveCardStmt: %w", cerr)
+		}
+	}
+	if q.updateCardStmt != nil {
+		if cerr := q.updateCardStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateCardStmt: %w", cerr)
 		}
 	}
 	return err
@@ -154,35 +170,39 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                DBTX
-	tx                *sql.Tx
-	createCardStmt    *sql.Stmt
-	createLibraryStmt *sql.Stmt
-	createUserStmt    *sql.Stmt
-	deleteCardStmt    *sql.Stmt
-	deleteLibraryStmt *sql.Stmt
-	getCardStmt       *sql.Stmt
-	getCardsStmt      *sql.Stmt
-	getLibrariesStmt  *sql.Stmt
-	getLibraryStmt    *sql.Stmt
-	getUserStmt       *sql.Stmt
-	moveCardStmt      *sql.Stmt
+	db                     DBTX
+	tx                     *sql.Tx
+	createCardStmt         *sql.Stmt
+	createLibraryStmt      *sql.Stmt
+	createUserStmt         *sql.Stmt
+	deleteCardStmt         *sql.Stmt
+	deleteLibraryStmt      *sql.Stmt
+	getCardStmt            *sql.Stmt
+	getCardsStmt           *sql.Stmt
+	getLibrariesStmt       *sql.Stmt
+	getLibraryStmt         *sql.Stmt
+	getUserStmt            *sql.Stmt
+	incrementCardCountStmt *sql.Stmt
+	moveCardStmt           *sql.Stmt
+	updateCardStmt         *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                tx,
-		tx:                tx,
-		createCardStmt:    q.createCardStmt,
-		createLibraryStmt: q.createLibraryStmt,
-		createUserStmt:    q.createUserStmt,
-		deleteCardStmt:    q.deleteCardStmt,
-		deleteLibraryStmt: q.deleteLibraryStmt,
-		getCardStmt:       q.getCardStmt,
-		getCardsStmt:      q.getCardsStmt,
-		getLibrariesStmt:  q.getLibrariesStmt,
-		getLibraryStmt:    q.getLibraryStmt,
-		getUserStmt:       q.getUserStmt,
-		moveCardStmt:      q.moveCardStmt,
+		db:                     tx,
+		tx:                     tx,
+		createCardStmt:         q.createCardStmt,
+		createLibraryStmt:      q.createLibraryStmt,
+		createUserStmt:         q.createUserStmt,
+		deleteCardStmt:         q.deleteCardStmt,
+		deleteLibraryStmt:      q.deleteLibraryStmt,
+		getCardStmt:            q.getCardStmt,
+		getCardsStmt:           q.getCardsStmt,
+		getLibrariesStmt:       q.getLibrariesStmt,
+		getLibraryStmt:         q.getLibraryStmt,
+		getUserStmt:            q.getUserStmt,
+		incrementCardCountStmt: q.incrementCardCountStmt,
+		moveCardStmt:           q.moveCardStmt,
+		updateCardStmt:         q.updateCardStmt,
 	}
 }
