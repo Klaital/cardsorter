@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS card_prices;
+DROP TABLE IF EXISTS card_faces;
+DROP TABLE IF EXISTS all_cards;
+DROP TABLE IF EXISTS scryfall_bulk;

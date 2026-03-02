@@ -7,7 +7,7 @@ setup:
 
 .PHONY: migrate
 migrate:
-	migrate -source file://db/schema/ -database postgres://af_gil:$password@tcp(mysql.abandonedfactory.net:3306)/gilgamesh_test
+	migrate -source file:./internal/db/schema/ -database 'mysql://$DB_USER:$DB_PASS@tcp($DB_HOST:3306)/gilgamesh_test?multiStatements=true&allowNativePasswords=true&allowPublicKeyRetrieval=true' up
 
 deploy:
 	GOOS=linux go build -o cardsorter .

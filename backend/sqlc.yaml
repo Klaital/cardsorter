@@ -2,7 +2,7 @@
 version: "2"
 sql:
   - engine: "mysql"
-    queries: "internal/db/queries/queries.sql"
+    queries: "internal/db/queries/"
     schema: "internal/db/schema/"
     gen:
       go:
@@ -11,3 +11,8 @@ sql:
         emit_json_tags: true
         emit_prepared_queries: true
         emit_interface: true
+#    overrides:
+#      - column: scryfall_bulk.scryfall_id
+#        go_type: "github.com/google/uuid.UUID"
+#      - column: all_cards.scryfall_id
+#        go_type: "github.com/google/uuid.UUID"

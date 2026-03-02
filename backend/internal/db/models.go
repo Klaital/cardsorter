@@ -17,6 +17,7 @@ type AllCard struct {
 	SetName    string `json:"set_name"`
 	Digital    bool   `json:"digital"`
 	Rarity     string `json:"rarity"`
+	Name       string `json:"name"`
 }
 
 type Card struct {
@@ -35,17 +36,18 @@ type Card struct {
 
 type CardFace struct {
 	ID                    uint64         `json:"id"`
-	CardID                int64          `json:"card_id"`
+	CardID                uint64         `json:"card_id"`
 	FlavorText            sql.NullString `json:"flavor_text"`
 	Layout                sql.NullString `json:"layout"`
 	Name                  string         `json:"name"`
 	OriginalImageUriPng   sql.NullString `json:"original_image_uri_png"`
 	OriginalImageUriLarge sql.NullString `json:"original_image_uri_large"`
+	OriginalImageUriSmall sql.NullString `json:"original_image_uri_small"`
 }
 
 type CardPrice struct {
 	ID        uint64        `json:"id"`
-	CardID    int64         `json:"card_id"`
+	CardID    uint64        `json:"card_id"`
 	Usd       sql.NullInt32 `json:"usd"`
 	UsdFoil   sql.NullInt32 `json:"usd_foil"`
 	UsdEtched sql.NullInt32 `json:"usd_etched"`
@@ -70,8 +72,6 @@ type ScryfallBulk struct {
 	Uri                   string       `json:"uri"`
 	Size                  int32        `json:"size"`
 	DownloadUri           string       `json:"download_uri"`
-	ContentType           string       `json:"content_type"`
-	ContentEncoding       string       `json:"content_encoding"`
 	ProcessingStartedAt   sql.NullTime `json:"processing_started_at"`
 	ProcessingCompletedAt sql.NullTime `json:"processing_completed_at"`
 }

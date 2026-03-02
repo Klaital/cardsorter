@@ -15,9 +15,9 @@ import (
 )
 
 var CLI struct {
-	Card    CardCmd    `cmd:"" help:"Manage cards"`
-	Library LibraryCmd `cmd:"" help:"Manage libraries"`
-	Data    DataCmd    `cmd:"" help:"Database-level operations"`
+	Card     CardCmd     `cmd:"" help:"Manage cards"`
+	Library  LibraryCmd  `cmd:"" help:"Manage libraries"`
+	Scryfall ScryfallCmd `cmd:"" help:"Scryfall operations: download new bulk data and ingest it into the database."`
 }
 
 //
@@ -103,31 +103,6 @@ type LibraryRepriceCmd struct {
 
 func (l *LibraryRepriceCmd) Run(a *App) error {
 	return a.RepriceLibrary(l.LibraryID)
-}
-
-//
-// DATA
-//
-
-type DataCmd struct {
-	Describe DataDescribeCmd `cmd:"" help:"Describe database state"`
-	Update   DataUpdateCmd   `cmd:"" help:"Update metadata"`
-}
-
-type DataDescribeCmd struct{}
-
-func (d *DataDescribeCmd) Run(a *App) error {
-	fmt.Printf("not implemented yet")
-	os.Exit(1)
-	return nil
-}
-
-type DataUpdateCmd struct{}
-
-func (d *DataUpdateCmd) Run(a *App) error {
-	fmt.Printf("not implemented yet")
-	os.Exit(1)
-	return nil
 }
 
 //

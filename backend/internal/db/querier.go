@@ -10,6 +10,7 @@ import (
 )
 
 type Querier interface {
+	CompleteScryfallProcessing(ctx context.Context, id uint32) error
 	CreateCard(ctx context.Context, arg CreateCardParams) (sql.Result, error)
 	CreateLibrary(ctx context.Context, arg CreateLibraryParams) (sql.Result, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error)
@@ -19,9 +20,19 @@ type Querier interface {
 	GetCards(ctx context.Context, libraryID int64) ([]Card, error)
 	GetLibraries(ctx context.Context, userID int64) ([]GetLibrariesRow, error)
 	GetLibrary(ctx context.Context, arg GetLibraryParams) (Library, error)
+	GetScryfallBulkBySID(ctx context.Context, uuidTOBIN string) (ScryfallBulk, error)
+	GetScryfallBulkByType(ctx context.Context, scryfallType string) ([]ScryfallBulk, error)
+	GetScryfallCardBySID(ctx context.Context, uuidTOBIN string) (AllCard, error)
+	GetScryfallCardByValue(ctx context.Context) (GetScryfallCardByValueRow, error)
 	GetUser(ctx context.Context, email string) (User, error)
 	IncrementCardCount(ctx context.Context, id int64) error
+	InsertScryfallBulk(ctx context.Context, arg InsertScryfallBulkParams) (sql.Result, error)
+	InsertScryfallCard(ctx context.Context, arg InsertScryfallCardParams) (sql.Result, error)
+	InsertScryfallFace(ctx context.Context, arg InsertScryfallFaceParams) error
+	ListScryfallBulks(ctx context.Context) ([]ScryfallBulk, error)
 	MoveCard(ctx context.Context, arg MoveCardParams) error
+	SetScryfallPrices(ctx context.Context, arg SetScryfallPricesParams) error
+	StartScryfallProcessing(ctx context.Context, id uint32) error
 	UpdateCard(ctx context.Context, arg UpdateCardParams) error
 }
 
