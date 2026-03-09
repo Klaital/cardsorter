@@ -10,28 +10,30 @@ import (
 )
 
 type AllCard struct {
-	ID         uint64 `json:"id"`
-	ScryfallID []byte `json:"scryfall_id"`
-	Lang       string `json:"lang"`
-	Layout     string `json:"layout"`
-	SetName    string `json:"set_name"`
-	Digital    bool   `json:"digital"`
-	Rarity     string `json:"rarity"`
-	Name       string `json:"name"`
+	ID              uint64 `json:"id"`
+	ScryfallID      []byte `json:"scryfall_id"`
+	Lang            string `json:"lang"`
+	Layout          string `json:"layout"`
+	SetName         string `json:"set_name"`
+	Digital         bool   `json:"digital"`
+	Rarity          string `json:"rarity"`
+	Name            string `json:"name"`
+	CollectorNumber string `json:"collector_number"`
 }
 
 type Card struct {
-	ID           int64        `json:"id"`
-	LibraryID    int64        `json:"library_id"`
-	Name         string       `json:"name"`
-	SetName      string       `json:"set_name"`
-	CollectorNum string       `json:"collector_num"`
-	Cnd          string       `json:"cnd"`
-	Foil         sql.NullBool `json:"foil"`
-	Usd          int32        `json:"usd"`
-	CreatedAt    sql.NullTime `json:"created_at"`
-	UpdatedAt    sql.NullTime `json:"updated_at"`
-	Qty          uint32       `json:"qty"`
+	ID             int64         `json:"id"`
+	LibraryID      int64         `json:"library_id"`
+	Name           string        `json:"name"`
+	SetName        string        `json:"set_name"`
+	CollectorNum   string        `json:"collector_num"`
+	Cnd            string        `json:"cnd"`
+	Foil           sql.NullBool  `json:"foil"`
+	Usd            int32         `json:"usd"`
+	CreatedAt      sql.NullTime  `json:"created_at"`
+	UpdatedAt      sql.NullTime  `json:"updated_at"`
+	Qty            uint32        `json:"qty"`
+	ScryfallCardID sql.NullInt64 `json:"scryfall_card_id"`
 }
 
 type CardFace struct {

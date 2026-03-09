@@ -14,11 +14,17 @@ VALUES (?, ?);
 SELECT
     l.id,
     l.name,
-    COALESCE(SUM(c.usd), 0) as total_value
+    COALESCE(SUM(
+        CASE
+            WHEN c.foil = TRUE THEN COALESCE(cp.usd_foil, c.usd)
+            ELSE COALESCE(cp.usd, c.usd)
+        END * c.qty
+    ), 0) as total_value
 FROM
     libraries l
-        LEFT JOIN
-    cards c ON l.id = c.library_id
+        LEFT JOIN cards c ON l.id = c.library_id
+        LEFT JOIN all_cards ac ON c.scryfall_card_id = ac.id
+        LEFT JOIN card_prices cp ON ac.id = cp.card_id
 WHERE l.user_id = ?
 GROUP BY
     l.id, l.name
@@ -34,18 +40,38 @@ DELETE FROM libraries
 WHERE id = ? AND user_id = ? LIMIT 1;
 
 -- name: CreateCard :execresult
-INSERT INTO cards (library_id, name, set_name, cnd, foil, collector_num, usd, qty)
-VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+INSERT INTO cards (library_id, name, set_name, cnd, foil, collector_num, usd, qty, scryfall_card_id)
+VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
 ON DUPLICATE KEY UPDATE
     qty = qty + 1;
 
 -- name: GetCards :many
-SELECT * FROM cards
-WHERE library_id = ?;
+SELECT
+    c.*,
+    ac.name as scryfall_name,
+    ac.rarity,
+    CASE
+        WHEN c.foil = TRUE THEN cp.usd_foil
+        ELSE cp.usd
+    END as current_usd_price
+FROM cards c
+LEFT JOIN all_cards ac ON c.scryfall_card_id = ac.id
+LEFT JOIN card_prices cp ON ac.id = cp.card_id
+WHERE c.library_id = ?;
 
 -- name: GetCard :one
-SELECT * FROM cards
-WHERE id = ?;
+SELECT
+    c.*,
+    ac.name as scryfall_name,
+    ac.rarity,
+    CASE
+        WHEN c.foil = TRUE THEN cp.usd_foil
+        ELSE cp.usd
+    END as current_usd_price
+FROM cards c
+LEFT JOIN all_cards ac ON c.scryfall_card_id = ac.id
+LEFT JOIN card_prices cp ON ac.id = cp.card_id
+WHERE c.id = ?;
 
 -- name: MoveCard :exec
 UPDATE cards

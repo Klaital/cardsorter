@@ -16,13 +16,14 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error)
 	DeleteCard(ctx context.Context, id int64) error
 	DeleteLibrary(ctx context.Context, arg DeleteLibraryParams) error
-	GetCard(ctx context.Context, id int64) (Card, error)
-	GetCards(ctx context.Context, libraryID int64) ([]Card, error)
+	GetCard(ctx context.Context, id int64) (GetCardRow, error)
+	GetCards(ctx context.Context, libraryID int64) ([]GetCardsRow, error)
 	GetLibraries(ctx context.Context, userID int64) ([]GetLibrariesRow, error)
 	GetLibrary(ctx context.Context, arg GetLibraryParams) (Library, error)
 	GetScryfallBulkBySID(ctx context.Context, uuidTOBIN string) (ScryfallBulk, error)
 	GetScryfallBulkByType(ctx context.Context, scryfallType string) ([]ScryfallBulk, error)
 	GetScryfallCardBySID(ctx context.Context, uuidTOBIN string) (AllCard, error)
+	GetScryfallCardBySetAndNumber(ctx context.Context, arg GetScryfallCardBySetAndNumberParams) (AllCard, error)
 	GetScryfallCardByValue(ctx context.Context) (GetScryfallCardByValueRow, error)
 	GetUser(ctx context.Context, email string) (User, error)
 	IncrementCardCount(ctx context.Context, id int64) error
@@ -34,6 +35,7 @@ type Querier interface {
 	SetScryfallPrices(ctx context.Context, arg SetScryfallPricesParams) error
 	StartScryfallProcessing(ctx context.Context, id uint32) error
 	UpdateCard(ctx context.Context, arg UpdateCardParams) error
+	UpdateCardCollectorNumber(ctx context.Context, arg UpdateCardCollectorNumberParams) error
 }
 
 var _ Querier = (*Queries)(nil)

@@ -63,6 +63,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getScryfallCardBySIDStmt, err = db.PrepareContext(ctx, getScryfallCardBySID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetScryfallCardBySID: %w", err)
 	}
+	if q.getScryfallCardBySetAndNumberStmt, err = db.PrepareContext(ctx, getScryfallCardBySetAndNumber); err != nil {
+		return nil, fmt.Errorf("error preparing query GetScryfallCardBySetAndNumber: %w", err)
+	}
 	if q.getScryfallCardByValueStmt, err = db.PrepareContext(ctx, getScryfallCardByValue); err != nil {
 		return nil, fmt.Errorf("error preparing query GetScryfallCardByValue: %w", err)
 	}
@@ -95,6 +98,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.updateCardStmt, err = db.PrepareContext(ctx, updateCard); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateCard: %w", err)
+	}
+	if q.updateCardCollectorNumberStmt, err = db.PrepareContext(ctx, updateCardCollectorNumber); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateCardCollectorNumber: %w", err)
 	}
 	return &q, nil
 }
@@ -166,6 +172,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getScryfallCardBySIDStmt: %w", cerr)
 		}
 	}
+	if q.getScryfallCardBySetAndNumberStmt != nil {
+		if cerr := q.getScryfallCardBySetAndNumberStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getScryfallCardBySetAndNumberStmt: %w", cerr)
+		}
+	}
 	if q.getScryfallCardByValueStmt != nil {
 		if cerr := q.getScryfallCardByValueStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getScryfallCardByValueStmt: %w", cerr)
@@ -221,6 +232,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing updateCardStmt: %w", cerr)
 		}
 	}
+	if q.updateCardCollectorNumberStmt != nil {
+		if cerr := q.updateCardCollectorNumberStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateCardCollectorNumberStmt: %w", cerr)
+		}
+	}
 	return err
 }
 
@@ -258,61 +274,65 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                             DBTX
-	tx                             *sql.Tx
-	completeScryfallProcessingStmt *sql.Stmt
-	createCardStmt                 *sql.Stmt
-	createLibraryStmt              *sql.Stmt
-	createUserStmt                 *sql.Stmt
-	deleteCardStmt                 *sql.Stmt
-	deleteLibraryStmt              *sql.Stmt
-	getCardStmt                    *sql.Stmt
-	getCardsStmt                   *sql.Stmt
-	getLibrariesStmt               *sql.Stmt
-	getLibraryStmt                 *sql.Stmt
-	getScryfallBulkBySIDStmt       *sql.Stmt
-	getScryfallBulkByTypeStmt      *sql.Stmt
-	getScryfallCardBySIDStmt       *sql.Stmt
-	getScryfallCardByValueStmt     *sql.Stmt
-	getUserStmt                    *sql.Stmt
-	incrementCardCountStmt         *sql.Stmt
-	insertScryfallBulkStmt         *sql.Stmt
-	insertScryfallCardStmt         *sql.Stmt
-	insertScryfallFaceStmt         *sql.Stmt
-	listScryfallBulksStmt          *sql.Stmt
-	moveCardStmt                   *sql.Stmt
-	setScryfallPricesStmt          *sql.Stmt
-	startScryfallProcessingStmt    *sql.Stmt
-	updateCardStmt                 *sql.Stmt
+	db                                DBTX
+	tx                                *sql.Tx
+	completeScryfallProcessingStmt    *sql.Stmt
+	createCardStmt                    *sql.Stmt
+	createLibraryStmt                 *sql.Stmt
+	createUserStmt                    *sql.Stmt
+	deleteCardStmt                    *sql.Stmt
+	deleteLibraryStmt                 *sql.Stmt
+	getCardStmt                       *sql.Stmt
+	getCardsStmt                      *sql.Stmt
+	getLibrariesStmt                  *sql.Stmt
+	getLibraryStmt                    *sql.Stmt
+	getScryfallBulkBySIDStmt          *sql.Stmt
+	getScryfallBulkByTypeStmt         *sql.Stmt
+	getScryfallCardBySIDStmt          *sql.Stmt
+	getScryfallCardBySetAndNumberStmt *sql.Stmt
+	getScryfallCardByValueStmt        *sql.Stmt
+	getUserStmt                       *sql.Stmt
+	incrementCardCountStmt            *sql.Stmt
+	insertScryfallBulkStmt            *sql.Stmt
+	insertScryfallCardStmt            *sql.Stmt
+	insertScryfallFaceStmt            *sql.Stmt
+	listScryfallBulksStmt             *sql.Stmt
+	moveCardStmt                      *sql.Stmt
+	setScryfallPricesStmt             *sql.Stmt
+	startScryfallProcessingStmt       *sql.Stmt
+	updateCardStmt                    *sql.Stmt
+	updateCardCollectorNumberStmt     *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                             tx,
-		tx:                             tx,
-		completeScryfallProcessingStmt: q.completeScryfallProcessingStmt,
-		createCardStmt:                 q.createCardStmt,
-		createLibraryStmt:              q.createLibraryStmt,
-		createUserStmt:                 q.createUserStmt,
-		deleteCardStmt:                 q.deleteCardStmt,
-		deleteLibraryStmt:              q.deleteLibraryStmt,
-		getCardStmt:                    q.getCardStmt,
-		getCardsStmt:                   q.getCardsStmt,
-		getLibrariesStmt:               q.getLibrariesStmt,
-		getLibraryStmt:                 q.getLibraryStmt,
-		getScryfallBulkBySIDStmt:       q.getScryfallBulkBySIDStmt,
-		getScryfallBulkByTypeStmt:      q.getScryfallBulkByTypeStmt,
-		getScryfallCardBySIDStmt:       q.getScryfallCardBySIDStmt,
-		getScryfallCardByValueStmt:     q.getScryfallCardByValueStmt,
-		getUserStmt:                    q.getUserStmt,
-		incrementCardCountStmt:         q.incrementCardCountStmt,
-		insertScryfallBulkStmt:         q.insertScryfallBulkStmt,
-		insertScryfallCardStmt:         q.insertScryfallCardStmt,
-		insertScryfallFaceStmt:         q.insertScryfallFaceStmt,
-		listScryfallBulksStmt:          q.listScryfallBulksStmt,
-		moveCardStmt:                   q.moveCardStmt,
-		setScryfallPricesStmt:          q.setScryfallPricesStmt,
-		startScryfallProcessingStmt:    q.startScryfallProcessingStmt,
-		updateCardStmt:                 q.updateCardStmt,
+		db:                                tx,
+		tx:                                tx,
+		completeScryfallProcessingStmt:    q.completeScryfallProcessingStmt,
+		createCardStmt:                    q.createCardStmt,
+		createLibraryStmt:                 q.createLibraryStmt,
+		createUserStmt:                    q.createUserStmt,
+		deleteCardStmt:                    q.deleteCardStmt,
+		deleteLibraryStmt:                 q.deleteLibraryStmt,
+		getCardStmt:                       q.getCardStmt,
+		getCardsStmt:                      q.getCardsStmt,
+		getLibrariesStmt:                  q.getLibrariesStmt,
+		getLibraryStmt:                    q.getLibraryStmt,
+		getScryfallBulkBySIDStmt:          q.getScryfallBulkBySIDStmt,
+		getScryfallBulkByTypeStmt:         q.getScryfallBulkByTypeStmt,
+		getScryfallCardBySIDStmt:          q.getScryfallCardBySIDStmt,
+		getScryfallCardBySetAndNumberStmt: q.getScryfallCardBySetAndNumberStmt,
+		getScryfallCardByValueStmt:        q.getScryfallCardByValueStmt,
+		getUserStmt:                       q.getUserStmt,
+		incrementCardCountStmt:            q.incrementCardCountStmt,
+		insertScryfallBulkStmt:            q.insertScryfallBulkStmt,
+		insertScryfallCardStmt:            q.insertScryfallCardStmt,
+		insertScryfallFaceStmt:            q.insertScryfallFaceStmt,
+		listScryfallBulksStmt:             q.listScryfallBulksStmt,
+		moveCardStmt:                      q.moveCardStmt,
+		setScryfallPricesStmt:             q.setScryfallPricesStmt,
+		startScryfallProcessingStmt:       q.startScryfallProcessingStmt,
+		updateCardStmt:                    q.updateCardStmt,
+		updateCardCollectorNumberStmt:     q.updateCardCollectorNumberStmt,
 	}
 }

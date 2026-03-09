@@ -81,7 +81,7 @@ func (q *Queries) GetScryfallBulkByType(ctx context.Context, scryfallType string
 }
 
 const getScryfallCardBySID = `-- name: GetScryfallCardBySID :one
-SELECT id, scryfall_id, lang, layout, set_name, digital, rarity, name FROM all_cards WHERE scryfall_id = UUID_TO_BIN(?)
+SELECT id, scryfall_id, lang, layout, set_name, digital, rarity, name, collector_number FROM all_cards WHERE scryfall_id = UUID_TO_BIN(?)
 `
 
 func (q *Queries) GetScryfallCardBySID(ctx context.Context, uuidTOBIN string) (AllCard, error) {
@@ -96,12 +96,39 @@ func (q *Queries) GetScryfallCardBySID(ctx context.Context, uuidTOBIN string) (A
 		&i.Digital,
 		&i.Rarity,
 		&i.Name,
+		&i.CollectorNumber,
+	)
+	return i, err
+}
+
+const getScryfallCardBySetAndNumber = `-- name: GetScryfallCardBySetAndNumber :one
+SELECT id, scryfall_id, lang, layout, set_name, digital, rarity, name, collector_number FROM all_cards WHERE set_name = ? AND collector_number = ? LIMIT 1
+`
+
+type GetScryfallCardBySetAndNumberParams struct {
+	SetName         string `json:"set_name"`
+	CollectorNumber string `json:"collector_number"`
+}
+
+func (q *Queries) GetScryfallCardBySetAndNumber(ctx context.Context, arg GetScryfallCardBySetAndNumberParams) (AllCard, error) {
+	row := q.queryRow(ctx, q.getScryfallCardBySetAndNumberStmt, getScryfallCardBySetAndNumber, arg.SetName, arg.CollectorNumber)
+	var i AllCard
+	err := row.Scan(
+		&i.ID,
+		&i.ScryfallID,
+		&i.Lang,
+		&i.Layout,
+		&i.SetName,
+		&i.Digital,
+		&i.Rarity,
+		&i.Name,
+		&i.CollectorNumber,
 	)
 	return i, err
 }
 
 const getScryfallCardByValue = `-- name: GetScryfallCardByValue :one
-SELECT all_cards.id, all_cards.scryfall_id, all_cards.lang, all_cards.layout, all_cards.set_name, all_cards.digital, all_cards.rarity, all_cards.name,
+SELECT all_cards.id, all_cards.scryfall_id, all_cards.lang, all_cards.layout, all_cards.set_name, all_cards.digital, all_cards.rarity, all_cards.name, all_cards.collector_number,
        card_prices.usd, card_prices.usd_foil,
        card_prices.usd_etched, card_prices.eur,
        card_prices.eur_foil, card_prices.tix
@@ -111,20 +138,21 @@ FROM all_cards
 `
 
 type GetScryfallCardByValueRow struct {
-	ID         uint64        `json:"id"`
-	ScryfallID []byte        `json:"scryfall_id"`
-	Lang       string        `json:"lang"`
-	Layout     string        `json:"layout"`
-	SetName    string        `json:"set_name"`
-	Digital    bool          `json:"digital"`
-	Rarity     string        `json:"rarity"`
-	Name       string        `json:"name"`
-	Usd        sql.NullInt32 `json:"usd"`
-	UsdFoil    sql.NullInt32 `json:"usd_foil"`
-	UsdEtched  sql.NullInt32 `json:"usd_etched"`
-	Eur        sql.NullInt32 `json:"eur"`
-	EurFoil    sql.NullInt32 `json:"eur_foil"`
-	Tix        sql.NullInt32 `json:"tix"`
+	ID              uint64        `json:"id"`
+	ScryfallID      []byte        `json:"scryfall_id"`
+	Lang            string        `json:"lang"`
+	Layout          string        `json:"layout"`
+	SetName         string        `json:"set_name"`
+	Digital         bool          `json:"digital"`
+	Rarity          string        `json:"rarity"`
+	Name            string        `json:"name"`
+	CollectorNumber string        `json:"collector_number"`
+	Usd             sql.NullInt32 `json:"usd"`
+	UsdFoil         sql.NullInt32 `json:"usd_foil"`
+	UsdEtched       sql.NullInt32 `json:"usd_etched"`
+	Eur             sql.NullInt32 `json:"eur"`
+	EurFoil         sql.NullInt32 `json:"eur_foil"`
+	Tix             sql.NullInt32 `json:"tix"`
 }
 
 func (q *Queries) GetScryfallCardByValue(ctx context.Context) (GetScryfallCardByValueRow, error) {
@@ -139,6 +167,7 @@ func (q *Queries) GetScryfallCardByValue(ctx context.Context) (GetScryfallCardBy
 		&i.Digital,
 		&i.Rarity,
 		&i.Name,
+		&i.CollectorNumber,
 		&i.Usd,
 		&i.UsdFoil,
 		&i.UsdEtched,
@@ -175,18 +204,19 @@ func (q *Queries) InsertScryfallBulk(ctx context.Context, arg InsertScryfallBulk
 }
 
 const insertScryfallCard = `-- name: InsertScryfallCard :execresult
-INSERT INTO all_cards (scryfall_id, lang, layout, set_name, digital, rarity, name)
-VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?)
+INSERT INTO all_cards (scryfall_id, lang, layout, set_name, digital, rarity, name, collector_number)
+VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?)
 `
 
 type InsertScryfallCardParams struct {
-	UUIDTOBIN string `json:"UUID_TO_BIN"`
-	Lang      string `json:"lang"`
-	Layout    string `json:"layout"`
-	SetName   string `json:"set_name"`
-	Digital   bool   `json:"digital"`
-	Rarity    string `json:"rarity"`
-	Name      string `json:"name"`
+	UUIDTOBIN       string `json:"UUID_TO_BIN"`
+	Lang            string `json:"lang"`
+	Layout          string `json:"layout"`
+	SetName         string `json:"set_name"`
+	Digital         bool   `json:"digital"`
+	Rarity          string `json:"rarity"`
+	Name            string `json:"name"`
+	CollectorNumber string `json:"collector_number"`
 }
 
 func (q *Queries) InsertScryfallCard(ctx context.Context, arg InsertScryfallCardParams) (sql.Result, error) {
@@ -198,6 +228,7 @@ func (q *Queries) InsertScryfallCard(ctx context.Context, arg InsertScryfallCard
 		arg.Digital,
 		arg.Rarity,
 		arg.Name,
+		arg.CollectorNumber,
 	)
 }
 
@@ -318,5 +349,19 @@ WHERE id = ?
 
 func (q *Queries) StartScryfallProcessing(ctx context.Context, id uint32) error {
 	_, err := q.exec(ctx, q.startScryfallProcessingStmt, startScryfallProcessing, id)
+	return err
+}
+
+const updateCardCollectorNumber = `-- name: UpdateCardCollectorNumber :exec
+UPDATE all_cards SET collector_number = ? WHERE scryfall_id = UUID_TO_BIN(?)
+`
+
+type UpdateCardCollectorNumberParams struct {
+	CollectorNumber string `json:"collector_number"`
+	UUIDTOBIN       string `json:"UUID_TO_BIN"`
+}
+
+func (q *Queries) UpdateCardCollectorNumber(ctx context.Context, arg UpdateCardCollectorNumberParams) error {
+	_, err := q.exec(ctx, q.updateCardCollectorNumberStmt, updateCardCollectorNumber, arg.CollectorNumber, arg.UUIDTOBIN)
 	return err
 }

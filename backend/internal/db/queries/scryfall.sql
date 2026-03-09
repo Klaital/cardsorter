@@ -22,8 +22,8 @@ SET processing_completed_at = NOW()
 WHERE id = ?;
 
 -- name: InsertScryfallCard :execresult
-INSERT INTO all_cards (scryfall_id, lang, layout, set_name, digital, rarity, name)
-VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?);
+INSERT INTO all_cards (scryfall_id, lang, layout, set_name, digital, rarity, name, collector_number)
+VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?);
 
 -- name: InsertScryfallFace :exec
 INSERT INTO card_faces (card_id, flavor_text, layout, name, original_image_uri_png, original_image_uri_large, original_image_uri_small)
@@ -48,3 +48,9 @@ FROM all_cards
 
 -- name: GetScryfallCardBySID :one
 SELECT * FROM all_cards WHERE scryfall_id = UUID_TO_BIN(?);
+
+-- name: UpdateCardCollectorNumber :exec
+UPDATE all_cards SET collector_number = ? WHERE scryfall_id = UUID_TO_BIN(?);
+
+-- name: GetScryfallCardBySetAndNumber :one
+SELECT * FROM all_cards WHERE set_name = ? AND collector_number = ? LIMIT 1;

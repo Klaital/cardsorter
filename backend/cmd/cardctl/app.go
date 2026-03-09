@@ -3,10 +3,13 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/klaital/cardsorter/backend/internal/db"
 	"github.com/klaital/cardsorter/backend/scryfallclient"
@@ -14,13 +17,15 @@ import (
 
 type App struct {
 	q           db.Querier
+	db          *sql.DB
 	currentUser db.User
 	ctx         context.Context
 }
 
-func NewApp(q db.Querier, user db.User) *App {
+func NewApp(q db.Querier, database *sql.DB, user db.User) *App {
 	return &App{
 		q:           q,
+		db:          database,
 		currentUser: user,
 		ctx:         context.Background(),
 	}
@@ -45,7 +50,30 @@ func (a *App) ListCards(libraryId int64) error {
 		if card.Foil.Bool {
 			foilMarker = " (F)"
 		}
-		fmt.Printf("%d\t%d\t%s-%s%s %s\n", card.ID, card.Qty, card.SetName, card.CollectorNum, foilMarker, card.Name)
+
+		// Use scryfall name if available, otherwise fall back to card name
+		displayName := card.Name
+		if card.ScryfallName.Valid && card.ScryfallName.String != "" {
+			displayName = card.ScryfallName.String
+		}
+
+		// Format rarity
+		rarity := ""
+		if card.Rarity.Valid {
+			rarity = fmt.Sprintf(" [%s]", card.Rarity.String)
+		}
+
+		// Format price
+		priceStr := ""
+		if card.CurrentUsdPrice != nil {
+			// CurrentUsdPrice is in cents as sql.NullInt32
+			if priceVal, ok := card.CurrentUsdPrice.(int32); ok {
+				priceStr = fmt.Sprintf(" $%.2f", float64(priceVal)/100.0)
+			}
+		}
+
+		fmt.Printf("%d\t%d\t%s-%s%s %s%s%s\n",
+			card.ID, card.Qty, card.SetName, card.CollectorNum, foilMarker, displayName, rarity, priceStr)
 	}
 
 	return nil
@@ -60,14 +88,35 @@ func (a *App) AddCard(libraryID int64, set, number, condition string, foil bool)
 		return fmt.Errorf("library does not exist")
 	}
 
+	// Look up the scryfall card by set and collector number
+	var scryfallCardID sql.NullInt64
+	scryfallCard, err := a.q.GetScryfallCardBySetAndNumber(a.ctx, db.GetScryfallCardBySetAndNumberParams{
+		SetName:         strings.ToLower(set),
+		CollectorNumber: number,
+	})
+	if err == nil {
+		// Found scryfall card, use its ID and name
+		scryfallCardID = sql.NullInt64{Int64: int64(scryfallCard.ID), Valid: true}
+	} else if err != sql.ErrNoRows {
+		// Some other error occurred
+		return fmt.Errorf("failed to lookup scryfall card: %w", err)
+	}
+	// If err == sql.ErrNoRows, scryfallCardID remains NULL
+
+	cardName := fmt.Sprintf("%s-%s", set, number)
+	if scryfallCardID.Valid {
+		cardName = scryfallCard.Name
+	}
+
 	_, err = a.q.CreateCard(a.ctx, db.CreateCardParams{
-		LibraryID:    lib.ID,
-		SetName:      strings.ToUpper(set),
-		CollectorNum: number,
-		Foil:         sql.NullBool{Bool: foil, Valid: true},
-		Cnd:          condition,
-		Usd:          0,                                 // will be replaced next time the scryfall scanner runs
-		Name:         fmt.Sprintf("%s-%s", set, number), // will be replaced next time the scryfall scanner runs
+		LibraryID:       lib.ID,
+		SetName:         strings.ToUpper(set),
+		CollectorNum:    number,
+		Foil:            sql.NullBool{Bool: foil, Valid: true},
+		Cnd:             condition,
+		Usd:             0,
+		Name:            cardName,
+		ScryfallCardID:  scryfallCardID,
 	})
 
 	// TODO: detect if card already exists, call IncrementCard()
@@ -108,6 +157,11 @@ func (a *App) DeleteLibrary(libraryID int64) error {
 }
 
 func (a *App) RepriceLibrary(libraryID int64) error {
+	_, err := a.q.GetCards(a.ctx, libraryID)
+	if err != nil {
+		return fmt.Errorf("fetching library data: %w", err)
+	}
+
 	// TODO: load scryfall data for each card in library
 	return errors.New("not implemented")
 }
@@ -171,36 +225,132 @@ func (a *App) GetLatestDefaultCards() error {
 
 	fmt.Printf("Processing %d cards...\n", len(cards))
 
-	// Process each card
-	for i, card := range cards {
-		if i%100 == 0 {
-			fmt.Printf("Processed %d/%d cards... %s-%s %s\n", i, len(cards), card.SetName, card.CollectorNumber, card.Name)
+	overallStart := time.Now()
+	totalBeginTime := time.Duration(0)
+	totalProcessTime := time.Duration(0)
+	totalCommitTime := time.Duration(0)
+
+	// Process cards in batches using transactions
+	const batchSize = 1000
+	for batchStart := 0; batchStart < len(cards); batchStart += batchSize {
+		batchEnd := batchStart + batchSize
+		if batchEnd > len(cards) {
+			batchEnd = len(cards)
 		}
+		batch := cards[batchStart:batchEnd]
 
-		// Try to insert the card (will fail silently if already exists due to UNIQUE constraint)
-		_, err := a.q.InsertScryfallCard(a.ctx, db.InsertScryfallCardParams{
-			UUIDTOBIN: card.ID.String(),
-			Lang:      card.Lang,
-			Layout:    card.Layout,
-			SetName:   card.Set,
-			Digital:   card.Digital,
-			Rarity:    card.Rarity,
-			Name:      card.Name,
-		})
+		batchStartTime := time.Now()
+		fmt.Printf("Processing batch %d-%d of %d cards...\n", batchStart, batchEnd, len(cards))
 
-		// Get the card ID (whether we just inserted it or it already existed)
-		var cardRecord db.AllCard
-		cardRecord, err = a.q.GetScryfallCardBySID(a.ctx, card.ID.String())
+		// Start a transaction for this batch
+		beginStart := time.Now()
+		tx, err := a.db.BeginTx(a.ctx, nil)
 		if err != nil {
-			return fmt.Errorf("failed to get card %s: %w", card.ID, err)
+			return fmt.Errorf("failed to begin transaction: %w", err)
+		}
+		beginDuration := time.Since(beginStart)
+		totalBeginTime += beginDuration
+
+		// Create a querier that uses this transaction
+		qtx := a.q.(*db.Queries).WithTx(tx)
+
+		// Process each card in the batch within the transaction
+		processStart := time.Now()
+		err = a.processBatch(qtx, batch)
+		processDuration := time.Since(processStart)
+		totalProcessTime += processDuration
+
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to process batch: %w", err)
 		}
 
-		// Insert card faces (only if card was just inserted)
-		// Note: We should check if faces already exist, but for simplicity we'll skip duplicates
+		// Commit the transaction
+		commitStart := time.Now()
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+		commitDuration := time.Since(commitStart)
+		totalCommitTime += commitDuration
+
+		batchDuration := time.Since(batchStartTime)
+		fmt.Printf("Batch %d-%d complete: begin=%v, process=%v, commit=%v, total=%v\n",
+			batchStart, batchEnd, beginDuration, processDuration, commitDuration, batchDuration)
+	}
+
+	overallDuration := time.Since(overallStart)
+	fmt.Printf("\nTiming summary:\n")
+	fmt.Printf("  Total time: %v\n", overallDuration)
+	fmt.Printf("  Begin transactions: %v (%.1f%%)\n", totalBeginTime, float64(totalBeginTime)/float64(overallDuration)*100)
+	fmt.Printf("  Processing cards: %v (%.1f%%)\n", totalProcessTime, float64(totalProcessTime)/float64(overallDuration)*100)
+	fmt.Printf("  Commit transactions: %v (%.1f%%)\n", totalCommitTime, float64(totalCommitTime)/float64(overallDuration)*100)
+	fmt.Printf("  Average per batch: %v\n", overallDuration/time.Duration(len(cards)/batchSize+1))
+
+	// Mark processing as completed
+	fmt.Println("Processing complete, marking as done...")
+	if err := a.q.CompleteScryfallProcessing(a.ctx, bulkRecord.ID); err != nil {
+		return fmt.Errorf("failed to mark processing as completed: %w", err)
+	}
+
+	fmt.Printf("Successfully processed %d cards\n", len(cards))
+	return nil
+}
+
+type batchTimings struct {
+	insertCardTime   time.Duration
+	selectCardTime   time.Duration
+	insertFacesTime  time.Duration
+	insertPricesTime time.Duration
+	cardCount        int
+	selectCount      int
+}
+
+func (a *App) processBatch(qtx *db.Queries, cards []scryfallclient.CardData) error {
+	timings := &batchTimings{}
+
+	for _, card := range cards {
+		// Try to insert the card
+		insertStart := time.Now()
+		result, err := qtx.InsertScryfallCard(a.ctx, db.InsertScryfallCardParams{
+			UUIDTOBIN:       card.ID.String(),
+			Lang:            card.Lang,
+			Layout:          card.Layout,
+			SetName:         card.Set,
+			Digital:         card.Digital,
+			Rarity:          card.Rarity,
+			Name:            card.Name,
+			CollectorNumber: card.CollectorNumber,
+		})
+		timings.insertCardTime += time.Since(insertStart)
+
+		// Get the card ID from the insert result or fetch if already exists
+		var cardID uint64
+		if err != nil {
+			// Card already exists due to UNIQUE constraint, fetch its ID
+			selectStart := time.Now()
+			cardRecord, err := qtx.GetScryfallCardBySID(a.ctx, card.ID.String())
+			timings.selectCardTime += time.Since(selectStart)
+			timings.selectCount++
+
+			if err != nil {
+				return fmt.Errorf("failed to get existing card %s: %w", card.ID, err)
+			}
+			cardID = cardRecord.ID
+		} else {
+			// New card inserted, use LAST_INSERT_ID
+			lastID, err := result.LastInsertId()
+			if err != nil {
+				return fmt.Errorf("failed to get last insert id for card %s: %w", card.ID, err)
+			}
+			cardID = uint64(lastID)
+		}
+
+		// Insert card faces
 		for _, face := range card.GetCardFaces() {
-			err = a.q.InsertScryfallFace(a.ctx, db.InsertScryfallFaceParams{
-				CardID:     cardRecord.ID,
-				FlavorText: sql.NullString{}, // Not available in CardFace struct
+			faceStart := time.Now()
+			err = qtx.InsertScryfallFace(a.ctx, db.InsertScryfallFaceParams{
+				CardID:     cardID,
+				FlavorText: sql.NullString{},
 				Layout:     sql.NullString{String: card.Layout, Valid: true},
 				Name:       face.Name,
 				OriginalImageUriPng: sql.NullString{
@@ -216,12 +366,14 @@ func (a *App) GetLatestDefaultCards() error {
 					Valid:  face.ImageUris.Small != "",
 				},
 			})
+			timings.insertFacesTime += time.Since(faceStart)
+
 			if err != nil {
 				return fmt.Errorf("failed to insert face for card %s: %w", card.ID, err)
 			}
 		}
 
-		// Upsert prices (this will update existing or insert new)
+		// Upsert prices
 		usd := parsePrice(card.Prices.Usd)
 		usdFoil := parsePriceAny(card.Prices.UsdFoil)
 		usdEtched := parsePriceAny(card.Prices.UsdEtched)
@@ -229,8 +381,9 @@ func (a *App) GetLatestDefaultCards() error {
 		eurFoil := parsePriceAny(card.Prices.EurFoil)
 		tix := parsePriceAny(card.Prices.Tix)
 
-		err = a.q.SetScryfallPrices(a.ctx, db.SetScryfallPricesParams{
-			CardID:      cardRecord.ID,
+		priceStart := time.Now()
+		err = qtx.SetScryfallPrices(a.ctx, db.SetScryfallPricesParams{
+			CardID:      cardID,
 			Usd:         usd,
 			UsdFoil:     usdFoil,
 			UsdEtched:   usdEtched,
@@ -244,18 +397,21 @@ func (a *App) GetLatestDefaultCards() error {
 			EurFoil_2:   eurFoil,
 			Tix_2:       tix,
 		})
+		timings.insertPricesTime += time.Since(priceStart)
+
 		if err != nil {
 			return fmt.Errorf("failed to set prices for card %s: %w", card.ID, err)
 		}
+
+		timings.cardCount++
 	}
 
-	// Mark processing as completed
-	fmt.Println("Processing complete, marking as done...")
-	if err := a.q.CompleteScryfallProcessing(a.ctx, bulkRecord.ID); err != nil {
-		return fmt.Errorf("failed to mark processing as completed: %w", err)
-	}
+	// Print timing breakdown for this batch
+	totalQueryTime := timings.insertCardTime + timings.selectCardTime + timings.insertFacesTime + timings.insertPricesTime
+	fmt.Printf("  Query breakdown: insert_card=%v, select_card=%v (%d selects), insert_faces=%v, insert_prices=%v, total=%v\n",
+		timings.insertCardTime, timings.selectCardTime, timings.selectCount,
+		timings.insertFacesTime, timings.insertPricesTime, totalQueryTime)
 
-	fmt.Printf("Successfully processed %d cards\n", len(cards))
 	return nil
 }
 
@@ -284,4 +440,68 @@ func parsePriceAny(price any) sql.NullInt32 {
 	default:
 		return sql.NullInt32{Valid: false}
 	}
+}
+
+func (a *App) BackfillCollectorNumbers(cacheFile string) error {
+	// Read the cached JSON file
+	file, err := os.Open(cacheFile)
+	if err != nil {
+		return fmt.Errorf("failed to open cache file: %w", err)
+	}
+	defer file.Close()
+
+	var cards []scryfallclient.CardData
+	if err := json.NewDecoder(file).Decode(&cards); err != nil {
+		return fmt.Errorf("failed to decode cards from cache file: %w", err)
+	}
+
+	fmt.Printf("Loaded %d cards from cache file, updating collector numbers...\n", len(cards))
+
+	updatedCount := 0
+	skippedCount := 0
+
+	// Process in batches using transactions
+	const batchSize = 1000
+	for batchStart := 0; batchStart < len(cards); batchStart += batchSize {
+		batchEnd := batchStart + batchSize
+		if batchEnd > len(cards) {
+			batchEnd = len(cards)
+		}
+		batch := cards[batchStart:batchEnd]
+
+		fmt.Printf("Updating batch %d-%d of %d cards...\n", batchStart, batchEnd, len(cards))
+
+		// Start a transaction for this batch
+		tx, err := a.db.BeginTx(a.ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to begin transaction: %w", err)
+		}
+
+		// Create a querier that uses this transaction
+		qtx := a.q.(*db.Queries).WithTx(tx)
+
+		// Update each card in the batch
+		for _, card := range batch {
+			err := qtx.UpdateCardCollectorNumber(a.ctx, db.UpdateCardCollectorNumberParams{
+				CollectorNumber: card.CollectorNumber,
+				UUIDTOBIN:       card.ID.String(),
+			})
+			if err != nil {
+				// Card doesn't exist in database, skip it
+				skippedCount++
+				continue
+			}
+			updatedCount++
+		}
+
+		// Commit the transaction
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+
+		fmt.Printf("Updated batch %d-%d (updated: %d, skipped: %d so far)\n", batchStart, batchEnd, updatedCount, skippedCount)
+	}
+
+	fmt.Printf("Successfully updated collector numbers for %d cards (%d skipped)\n", updatedCount, skippedCount)
+	return nil
 }

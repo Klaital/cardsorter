@@ -6,7 +6,8 @@ import (
 )
 
 type ScryfallCmd struct {
-	Update DataUpdateCmd `cmd:"" help:"Download and ingest new bulk data"`
+	Update          DataUpdateCmd              `cmd:"" help:"Download and ingest new bulk data"`
+	BackfillNumbers ScryfallBackfillNumbersCmd `cmd:"" help:"Backfill collector numbers from cached JSON file"`
 }
 
 type DataUpdateCmd struct{}
@@ -19,4 +20,12 @@ func (d *DataUpdateCmd) Run(a *App) error {
 
 	os.Exit(1)
 	return nil
+}
+
+type ScryfallBackfillNumbersCmd struct {
+	CacheFile string `arg:"" help:"Path to the cached JSON file" type:"path"`
+}
+
+func (s *ScryfallBackfillNumbersCmd) Run(a *App) error {
+	return a.BackfillCollectorNumbers(s.CacheFile)
 }

@@ -11,20 +11,21 @@ import (
 )
 
 const createCard = `-- name: CreateCard :execresult
-INSERT INTO cards (library_id, name, set_name, cnd, foil, collector_num, usd, qty)
-VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+INSERT INTO cards (library_id, name, set_name, cnd, foil, collector_num, usd, qty, scryfall_card_id)
+VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
 ON DUPLICATE KEY UPDATE
     qty = qty + 1
 `
 
 type CreateCardParams struct {
-	LibraryID    int64        `json:"library_id"`
-	Name         string       `json:"name"`
-	SetName      string       `json:"set_name"`
-	Cnd          string       `json:"cnd"`
-	Foil         sql.NullBool `json:"foil"`
-	CollectorNum string       `json:"collector_num"`
-	Usd          int32        `json:"usd"`
+	LibraryID      int64         `json:"library_id"`
+	Name           string        `json:"name"`
+	SetName        string        `json:"set_name"`
+	Cnd            string        `json:"cnd"`
+	Foil           sql.NullBool  `json:"foil"`
+	CollectorNum   string        `json:"collector_num"`
+	Usd            int32         `json:"usd"`
+	ScryfallCardID sql.NullInt64 `json:"scryfall_card_id"`
 }
 
 func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (sql.Result, error) {
@@ -36,6 +37,7 @@ func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (sql.Res
 		arg.Foil,
 		arg.CollectorNum,
 		arg.Usd,
+		arg.ScryfallCardID,
 	)
 }
 
@@ -93,13 +95,41 @@ func (q *Queries) DeleteLibrary(ctx context.Context, arg DeleteLibraryParams) er
 }
 
 const getCard = `-- name: GetCard :one
-SELECT id, library_id, name, set_name, collector_num, cnd, foil, usd, created_at, updated_at, qty FROM cards
-WHERE id = ?
+SELECT
+    c.id, c.library_id, c.name, c.set_name, c.collector_num, c.cnd, c.foil, c.usd, c.created_at, c.updated_at, c.qty, c.scryfall_card_id,
+    ac.name as scryfall_name,
+    ac.rarity,
+    CASE
+        WHEN c.foil = TRUE THEN cp.usd_foil
+        ELSE cp.usd
+    END as current_usd_price
+FROM cards c
+LEFT JOIN all_cards ac ON c.scryfall_card_id = ac.id
+LEFT JOIN card_prices cp ON ac.id = cp.card_id
+WHERE c.id = ?
 `
 
-func (q *Queries) GetCard(ctx context.Context, id int64) (Card, error) {
+type GetCardRow struct {
+	ID              int64          `json:"id"`
+	LibraryID       int64          `json:"library_id"`
+	Name            string         `json:"name"`
+	SetName         string         `json:"set_name"`
+	CollectorNum    string         `json:"collector_num"`
+	Cnd             string         `json:"cnd"`
+	Foil            sql.NullBool   `json:"foil"`
+	Usd             int32          `json:"usd"`
+	CreatedAt       sql.NullTime   `json:"created_at"`
+	UpdatedAt       sql.NullTime   `json:"updated_at"`
+	Qty             uint32         `json:"qty"`
+	ScryfallCardID  sql.NullInt64  `json:"scryfall_card_id"`
+	ScryfallName    sql.NullString `json:"scryfall_name"`
+	Rarity          sql.NullString `json:"rarity"`
+	CurrentUsdPrice interface{}    `json:"current_usd_price"`
+}
+
+func (q *Queries) GetCard(ctx context.Context, id int64) (GetCardRow, error) {
 	row := q.queryRow(ctx, q.getCardStmt, getCard, id)
-	var i Card
+	var i GetCardRow
 	err := row.Scan(
 		&i.ID,
 		&i.LibraryID,
@@ -112,24 +142,56 @@ func (q *Queries) GetCard(ctx context.Context, id int64) (Card, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Qty,
+		&i.ScryfallCardID,
+		&i.ScryfallName,
+		&i.Rarity,
+		&i.CurrentUsdPrice,
 	)
 	return i, err
 }
 
 const getCards = `-- name: GetCards :many
-SELECT id, library_id, name, set_name, collector_num, cnd, foil, usd, created_at, updated_at, qty FROM cards
-WHERE library_id = ?
+SELECT
+    c.id, c.library_id, c.name, c.set_name, c.collector_num, c.cnd, c.foil, c.usd, c.created_at, c.updated_at, c.qty, c.scryfall_card_id,
+    ac.name as scryfall_name,
+    ac.rarity,
+    CASE
+        WHEN c.foil = TRUE THEN cp.usd_foil
+        ELSE cp.usd
+    END as current_usd_price
+FROM cards c
+LEFT JOIN all_cards ac ON c.scryfall_card_id = ac.id
+LEFT JOIN card_prices cp ON ac.id = cp.card_id
+WHERE c.library_id = ?
 `
 
-func (q *Queries) GetCards(ctx context.Context, libraryID int64) ([]Card, error) {
+type GetCardsRow struct {
+	ID              int64          `json:"id"`
+	LibraryID       int64          `json:"library_id"`
+	Name            string         `json:"name"`
+	SetName         string         `json:"set_name"`
+	CollectorNum    string         `json:"collector_num"`
+	Cnd             string         `json:"cnd"`
+	Foil            sql.NullBool   `json:"foil"`
+	Usd             int32          `json:"usd"`
+	CreatedAt       sql.NullTime   `json:"created_at"`
+	UpdatedAt       sql.NullTime   `json:"updated_at"`
+	Qty             uint32         `json:"qty"`
+	ScryfallCardID  sql.NullInt64  `json:"scryfall_card_id"`
+	ScryfallName    sql.NullString `json:"scryfall_name"`
+	Rarity          sql.NullString `json:"rarity"`
+	CurrentUsdPrice interface{}    `json:"current_usd_price"`
+}
+
+func (q *Queries) GetCards(ctx context.Context, libraryID int64) ([]GetCardsRow, error) {
 	rows, err := q.query(ctx, q.getCardsStmt, getCards, libraryID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Card
+	var items []GetCardsRow
 	for rows.Next() {
-		var i Card
+		var i GetCardsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.LibraryID,
@@ -142,6 +204,10 @@ func (q *Queries) GetCards(ctx context.Context, libraryID int64) ([]Card, error)
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Qty,
+			&i.ScryfallCardID,
+			&i.ScryfallName,
+			&i.Rarity,
+			&i.CurrentUsdPrice,
 		); err != nil {
 			return nil, err
 		}
@@ -160,11 +226,17 @@ const getLibraries = `-- name: GetLibraries :many
 SELECT
     l.id,
     l.name,
-    COALESCE(SUM(c.usd), 0) as total_value
+    COALESCE(SUM(
+        CASE
+            WHEN c.foil = TRUE THEN COALESCE(cp.usd_foil, c.usd)
+            ELSE COALESCE(cp.usd, c.usd)
+        END * c.qty
+    ), 0) as total_value
 FROM
     libraries l
-        LEFT JOIN
-    cards c ON l.id = c.library_id
+        LEFT JOIN cards c ON l.id = c.library_id
+        LEFT JOIN all_cards ac ON c.scryfall_card_id = ac.id
+        LEFT JOIN card_prices cp ON ac.id = cp.card_id
 WHERE l.user_id = ?
 GROUP BY
     l.id, l.name

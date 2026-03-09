@@ -63,10 +63,9 @@ func (c *CardIncrementCmd) Run(a *App) error {
 //
 
 type LibraryCmd struct {
-	Create  LibraryCreateCmd  `cmd:"" help:"Create library"`
-	List    LibraryListCmd    `cmd:"" help:"List libraries"`
-	Rename  LibraryRenameCmd  `cmd:"" help:"Rename library"`
-	Reprice LibraryRepriceCmd `cmd:"" help:"Reprice library"`
+	Create LibraryCreateCmd `cmd:"" help:"Create library"`
+	List   LibraryListCmd   `cmd:"" help:"List libraries"`
+	Rename LibraryRenameCmd `cmd:"" help:"Rename library"`
 }
 
 type LibraryCreateCmd struct {
@@ -95,14 +94,6 @@ func (l *LibraryRenameCmd) Run(a *App) error {
 
 	//return a.RenameLibrary(l.OldName, l.NewName)
 	return nil
-}
-
-type LibraryRepriceCmd struct {
-	LibraryID int64 `short:"l" arg:"library" help:"Library ID"`
-}
-
-func (l *LibraryRepriceCmd) Run(a *App) error {
-	return a.RepriceLibrary(l.LibraryID)
 }
 
 //
@@ -139,7 +130,7 @@ func main() {
 	}
 
 	// Create a new application
-	app := NewApp(queries, user)
+	app := NewApp(queries, db, user)
 
 	err = ctx.Run(app)
 	ctx.FatalIfErrorf(err)
