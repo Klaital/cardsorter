@@ -42,10 +42,10 @@ func (s *CardServer) CreateCard(ctx context.Context, req *pb.CreateCardRequest) 
 	}
 
 	resp, err := queries.CreateCard(ctx, carddb.CreateCardParams{
-		LibraryID: req.LibraryId,
-		Name:      req.Name,
-		SetName:   req.SetName,
-		//TODO: add Condition:       req.Condition,
+		LibraryID:    req.LibraryId,
+		Name:         req.Name,
+		SetName:      req.SetName,
+		//TODO: add Cnd:           req.Condition,
 		Foil:         sql.NullBool{Bool: req.Foil, Valid: true},
 		CollectorNum: req.CollectorNumber,
 		Usd:          req.UsdPrice,
@@ -99,7 +99,7 @@ func (s *CardServer) GetCards(ctx context.Context, req *pb.GetCardsRequest) (*pb
 		Cards: make([]*pb.Card, 0, len(cards)),
 	}
 	for _, card := range cards {
-		response.Cards = append(response.Cards, toProtoCard(card))
+		response.Cards = append(response.Cards, toProtoCardFromCardsRow(card))
 	}
 
 	return response, nil
@@ -214,17 +214,62 @@ func (s *CardServer) DeleteCard(ctx context.Context, req *pb.DeleteCardRequest) 
 	return &emptypb.Empty{}, nil
 }
 
-// Helper function to convert database card to proto card
-func toProtoCard(card carddb.Card) *pb.Card {
+// Helper function to convert database card row to proto card
+func toProtoCard(card carddb.GetCardRow) *pb.Card {
+	// Use scryfall name if available, fallback to user-entered name
+	name := card.Name
+	if card.ScryfallName.Valid && card.ScryfallName.String != "" {
+		name = card.ScryfallName.String
+	}
+
+	// Use calculated current price if available, fallback to stored price
+	price := card.Usd
+	if card.CurrentUsdPrice != nil {
+		if priceInt, ok := card.CurrentUsdPrice.(int32); ok {
+			price = priceInt
+		} else if priceInt64, ok := card.CurrentUsdPrice.(int64); ok {
+			price = int32(priceInt64)
+		}
+	}
+
 	return &pb.Card{
-		Id:        card.ID,
-		LibraryId: card.LibraryID,
-		Name:      card.Name,
-		SetName:   card.SetName,
-		//Condition:       card.Condition,
-		Foil:            card.Foil.Bool,
+		Id:              card.ID,
+		LibraryId:       card.LibraryID,
+		Name:            name,
+		SetId:         card.SetName,
 		CollectorNumber: card.CollectorNum,
-		UsdPrice:        card.Usd,
+		Foil:            card.Foil.Bool,
+		UsdPrice:        price,
+		Qty:             int32(card.Qty),
+	}
+}
+
+// Helper function to convert GetCardsRow to proto card
+func toProtoCardFromCardsRow(card carddb.GetCardsRow) *pb.Card {
+	// Use scryfall name if available, fallback to user-entered name
+	name := card.Name
+	if card.ScryfallName.Valid && card.ScryfallName.String != "" {
+		name = card.ScryfallName.String
+	}
+
+	// Use calculated current price if available, fallback to stored price
+	price := card.Usd
+	if card.CurrentUsdPrice != nil {
+		if priceInt, ok := card.CurrentUsdPrice.(int32); ok {
+			price = priceInt
+		} else if priceInt64, ok := card.CurrentUsdPrice.(int64); ok {
+			price = int32(priceInt64)
+		}
+	}
+
+	return &pb.Card{
+		Id:              card.ID,
+		LibraryId:       card.LibraryID,
+		Name:            name,
+		SetId:         card.SetName,
+		CollectorNumber: card.CollectorNum,
+		Foil:            card.Foil.Bool,
+		UsdPrice:        price,
 		Qty:             int32(card.Qty),
 	}
 }

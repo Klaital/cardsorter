@@ -482,7 +482,7 @@
         "name": {
           "type": "string"
         },
-        "setName": {
+        "setId": {
           "type": "string",
           "description": "Set ID, e.g. 'FIN'"
         },
@@ -504,6 +504,15 @@
         "qty": {
           "type": "integer",
           "format": "int32"
+        },
+        "rarity": {
+          "type": "string",
+          "description": "Card rarity (common, uncommon, rare, mythic)"
+        },
+        "currentUsdPrice": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Current market price in USD cents (foil-aware)"
         }
       }
     },

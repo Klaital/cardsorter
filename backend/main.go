@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	pb "github.com/klaital/cardsorter/backend/gen/protos"
@@ -25,6 +26,49 @@ var swaggerUI embed.FS
 
 //go:embed gen/openapiv2/openapi.swagger.json
 var swaggerDoc []byte
+
+// corsMiddleware adds CORS headers to allow requests from frontend
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+
+		// Allow localhost on any port and production domains
+		allowedOrigins := []string{
+			"http://localhost:5173",
+			"http://localhost:3000",
+			"https://klaital.com",
+			"https://abandonedfactory.net",
+			"http://abandonedfactory.net",
+		}
+
+		// Check if origin is localhost with any port
+		if strings.HasPrefix(origin, "http://localhost:") ||
+			strings.HasPrefix(origin, "http://127.0.0.1:") {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		} else {
+			// Check against allowed origins
+			for _, allowed := range allowedOrigins {
+				if origin == allowed {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+					break
+				}
+			}
+		}
+
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+
+		// Handle preflight requests
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 func main() {
 	// Load .env file if it exists
@@ -41,7 +85,7 @@ func main() {
 	}
 	defer db.Close()
 	if err := db.Ping(); err != nil {
-		slog.Error("failed the initial db ping", "err", err, "connstring", cfg.MysqlDbStringRedacted())
+		slog.Error("failed the initial db ping", "err", err, "connstring", cfg.MysqlDbString())
 		// TODO: should we wait/retry here? Do we ever wait for the db to be created?
 		os.Exit(1)
 	}
@@ -57,15 +101,34 @@ func main() {
 
 	// Start gRPC server
 	slog.Debug("Starting gRPC server", "port", cfg.GrpcPort)
-	lis, _ := net.Listen("tcp", cfg.GrpcPort)
+	lis, err := net.Listen("tcp", cfg.GrpcPort)
+	if err != nil {
+		slog.Error("Failed to start gRPC listener", "err", err, "port", cfg.GrpcPort)
+		os.Exit(1)
+	}
 	go grpcServer.Serve(lis)
 
 	// Create gRPC-Gateway mux
 	gwmux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	err = pb.RegisterLibraryServiceHandlerFromEndpoint(context.Background(), gwmux, "localhost:9090", opts)
+	grpcEndpoint := "localhost" + cfg.GrpcPort
+
+	// Register all service handlers with the gateway
+	err = pb.RegisterLibraryServiceHandlerFromEndpoint(context.Background(), gwmux, grpcEndpoint, opts)
 	if err != nil {
-		slog.Error("Failed to register grpc service", "err", err.Error())
+		slog.Error("Failed to register LibraryService gateway", "err", err.Error())
+		os.Exit(1)
+	}
+
+	err = pb.RegisterUserServiceHandlerFromEndpoint(context.Background(), gwmux, grpcEndpoint, opts)
+	if err != nil {
+		slog.Error("Failed to register UserService gateway", "err", err.Error())
+		os.Exit(1)
+	}
+
+	err = pb.RegisterCardServiceHandlerFromEndpoint(context.Background(), gwmux, grpcEndpoint, opts)
+	if err != nil {
+		slog.Error("Failed to register CardService gateway", "err", err.Error())
 		os.Exit(1)
 	}
 
@@ -109,8 +172,8 @@ func main() {
 		w.Write(swaggerDoc)
 	})
 
-	// Start HTTP server with the combined mux
+	// Start HTTP server with the combined mux wrapped in CORS middleware
 	slog.Debug("Starting gRPC Gateway HTTP server", "port", cfg.HttpPort)
-	err = http.ListenAndServe(cfg.HttpPort, mux)
+	err = http.ListenAndServe(cfg.HttpPort, corsMiddleware(mux))
 	slog.Error("Unable to start http server", "err", err)
 }

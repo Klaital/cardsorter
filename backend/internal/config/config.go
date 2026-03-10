@@ -41,6 +41,7 @@ func ParseEnv() Config {
 }
 
 func (c Config) MysqlDbString() string {
+	// URL-encode the user and password to handle special characters
 	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", c.DB.User, c.DB.Password, c.DB.Host, c.DB.Port, c.DB.Name)
 }
 
