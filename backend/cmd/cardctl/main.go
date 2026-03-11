@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
+
 	"github.com/alecthomas/kong"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -17,6 +19,7 @@ import (
 var CLI struct {
 	Card     CardCmd     `cmd:"" help:"Manage cards"`
 	Library  LibraryCmd  `cmd:"" help:"Manage libraries"`
+	User     UserCmd     `cmd:"" help:"Manage users"`
 	Scryfall ScryfallCmd `cmd:"" help:"Scryfall operations: download new bulk data and ingest it into the database."`
 }
 
@@ -56,6 +59,40 @@ type CardIncrementCmd struct {
 
 func (c *CardIncrementCmd) Run(a *App) error {
 	return a.IncrementCard(c.CardID)
+}
+
+//
+// USER
+//
+
+type UserCmd struct {
+	List           UserListCmd           `cmd:"" help:"List all users"`
+	Create         UserCreateCmd         `cmd:"" help:"Create a new user with default library"`
+	ChangePassword UserChangePasswordCmd `cmd:"" help:"Change user password"`
+}
+
+type UserListCmd struct{}
+
+func (u *UserListCmd) Run(a *App) error {
+	return a.ListUsers()
+}
+
+type UserCreateCmd struct {
+	Email    string `arg:"" help:"User email"`
+	Password string `arg:"" help:"Initial password"`
+}
+
+func (u *UserCreateCmd) Run(a *App) error {
+	return a.CreateUser(u.Email, u.Password)
+}
+
+type UserChangePasswordCmd struct {
+	Email       string `arg:"" help:"User email"`
+	NewPassword string `arg:"" help:"New password"`
+}
+
+func (u *UserChangePasswordCmd) Run(a *App) error {
+	return a.ChangeUserPassword(u.Email, u.NewPassword)
 }
 
 //
@@ -123,10 +160,17 @@ func main() {
 	}
 
 	queries := carddb.New(db)
-	user, err := queries.GetUser(context.Background(), "kenkaku@gmail.com")
-	if err != nil {
-		slog.Error("Failed to fetch user", "err", err)
-		os.Exit(1)
+
+	// For user management commands, we don't need a current user
+	// For other commands, fetch the default user
+	var user carddb.User
+	if ctx.Command() != "user list" && ctx.Command() != "user create <email> <password>" &&
+	   !strings.HasPrefix(ctx.Command(), "user change-password") {
+		user, err = queries.GetUser(context.Background(), "kenkaku@gmail.com")
+		if err != nil {
+			slog.Error("Failed to fetch user", "err", err)
+			os.Exit(1)
+		}
 	}
 
 	// Create a new application

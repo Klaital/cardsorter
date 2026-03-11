@@ -12,10 +12,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('authToken');
+    // Load token from localStorage and immediately set it on the API client
+    const savedToken = localStorage.getItem('authToken');
+    if (savedToken) {
+      setApiToken(savedToken);
+    }
+    return savedToken;
   });
 
   useEffect(() => {
+    // Keep localStorage in sync when token changes
     if (token) {
       localStorage.setItem('authToken', token);
       setApiToken(token);

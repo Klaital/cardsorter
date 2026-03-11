@@ -27,9 +27,12 @@ func getUserIDFromContext(ctx context.Context) (int64, error) {
 	}
 	slog.Debug("Loaded metadata", "raw", md)
 	if values, ok := md["authorization"]; ok {
+		// Strip "Bearer " prefix if present
+		tokenString := strings.TrimPrefix(values[0], "Bearer ")
+
 		// Parse the JWT
 		claims := &auth.Claims{}
-		token, err := jwt.ParseWithClaims(values[0], claims, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return config.ParseEnv().JwtKey, nil
 		})
 

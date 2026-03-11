@@ -9,6 +9,7 @@ import (
 	"github.com/klaital/cardsorter/backend/internal/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"log/slog"
 	"net"
 	"net/http"
@@ -108,8 +109,17 @@ func main() {
 	}
 	go grpcServer.Serve(lis)
 
-	// Create gRPC-Gateway mux
-	gwmux := runtime.NewServeMux()
+	// Create gRPC-Gateway mux with metadata annotator to forward auth headers
+	gwmux := runtime.NewServeMux(
+		runtime.WithMetadata(func(ctx context.Context, req *http.Request) metadata.MD {
+			// Forward the Authorization header from HTTP to gRPC metadata
+			md := metadata.MD{}
+			if auth := req.Header.Get("Authorization"); auth != "" {
+				md.Set("authorization", auth)
+			}
+			return md
+		}),
+	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	grpcEndpoint := "localhost" + cfg.GrpcPort
 
