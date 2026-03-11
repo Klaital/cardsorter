@@ -16,6 +16,23 @@
   font-size: 2rem;
 }
 
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.create-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  background-color: #646cff;
+  border: 1px solid #646cff;
+  color: white;
+}
+
+.create-button:hover {
+  background-color: #535bf2;
+}
+
 .logout-button {
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
@@ -55,6 +72,10 @@
   gap: 1.5rem;
 }
 
+.library-card-wrapper {
+  position: relative;
+}
+
 .library-card {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -64,6 +85,7 @@
   color: inherit;
   transition: all 0.2s;
   cursor: pointer;
+  display: block;
 }
 
 .library-card:hover {
@@ -71,6 +93,26 @@
   border-color: #646cff;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.delete-button {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  background-color: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: #fca5a5;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 1;
+}
+
+.delete-button:hover {
+  background-color: rgba(220, 38, 38, 0.2);
+  border-color: rgba(220, 38, 38, 0.5);
 }
 
 .library-card h2 {
@@ -102,6 +144,93 @@
   font-weight: 600;
 }
 
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  min-width: 400px;
+  max-width: 90vw;
+}
+
+.modal h2 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.cancel-button {
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: inherit;
+}
+
+.cancel-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.submit-button {
+  padding: 0.5rem 1rem;
+  background-color: #646cff;
+  border: 1px solid #646cff;
+  color: white;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #535bf2;
+}
+
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @media (prefers-color-scheme: light) {
   .library-card {
     background: white;
@@ -116,5 +245,24 @@
   .error-message {
     background: rgba(220, 38, 38, 0.05);
     color: #dc2626;
+  }
+
+  .delete-button {
+    background-color: rgba(220, 38, 38, 0.05);
+    color: #dc2626;
+  }
+
+  .delete-button:hover {
+    background-color: rgba(220, 38, 38, 0.1);
+  }
+
+  .modal {
+    background: white;
+    border-color: #e0e0e0;
+  }
+
+  .form-group input {
+    background: white;
+    border-color: #e0e0e0;
   }
 }
