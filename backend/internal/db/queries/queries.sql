@@ -14,12 +14,14 @@ VALUES (?, ?);
 SELECT
     l.id,
     l.name,
-    COALESCE(SUM(
+    l.user_id,
+    CAST(COALESCE(SUM(
         CASE
             WHEN c.foil = TRUE THEN COALESCE(cp.usd_foil, c.usd)
             ELSE COALESCE(cp.usd, c.usd)
         END * c.qty
-    ), 0) as total_value
+    ), 0) AS SIGNED) as total_value,
+    CAST(COALESCE(COUNT(DISTINCT c.id), 0) AS SIGNED) as card_count
 FROM
     libraries l
         LEFT JOIN cards c ON l.id = c.library_id
@@ -27,13 +29,32 @@ FROM
         LEFT JOIN card_prices cp ON ac.id = cp.card_id
 WHERE l.user_id = ?
 GROUP BY
-    l.id, l.name
+    l.id, l.name, l.user_id
 ORDER BY
     l.id;
 
 -- name: GetLibrary :one
-SELECT * FROM libraries
-WHERE id = ? AND user_id = ?;
+SELECT
+    l.id,
+    l.name,
+    l.user_id,
+    l.created_at,
+    l.updated_at,
+    CAST(COALESCE(SUM(
+        CASE
+            WHEN c.foil = TRUE THEN COALESCE(cp.usd_foil, c.usd)
+            ELSE COALESCE(cp.usd, c.usd)
+        END * c.qty
+    ), 0) AS SIGNED) as total_value,
+    CAST(COALESCE(COUNT(DISTINCT c.id), 0) AS SIGNED) as card_count
+FROM
+    libraries l
+        LEFT JOIN cards c ON l.id = c.library_id
+        LEFT JOIN all_cards ac ON c.scryfall_card_id = ac.id
+        LEFT JOIN card_prices cp ON ac.id = cp.card_id
+WHERE l.id = ? AND l.user_id = ?
+GROUP BY
+    l.id, l.name, l.user_id, l.created_at, l.updated_at;
 
 -- name: DeleteLibrary :exec
 DELETE FROM libraries

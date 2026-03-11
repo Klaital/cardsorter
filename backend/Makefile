@@ -13,4 +13,3 @@ deploy:
 	GOOS=linux go build -o cardsorter .
 	scp cardsorter kit@klaital.com:/home/kit/bin/cardsorter/
 	ssh kit@klaital.com "sudo systemctl restart cardsorter.service"
-

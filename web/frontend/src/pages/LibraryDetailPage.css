@@ -67,6 +67,28 @@
   text-align: right;
 }
 
+.text-center {
+  text-align: center;
+}
+
+.price-cell {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s;
+}
+
+.price-cell:hover {
+  background: rgba(100, 108, 255, 0.1);
+  border-radius: 4px;
+}
+
+.per-card-price {
+  display: block;
+  font-size: 0.85em;
+  color: #888;
+  margin-top: 0.25rem;
+}
+
 .rarity {
   display: inline-block;
   padding: 0.25rem 0.5rem;
@@ -133,6 +155,10 @@
   .rarity-mythic {
     background: rgba(255, 69, 0, 0.15);
     color: #d94000;
+  }
+
+  .per-card-price {
+    color: #666;
   }
 }
 

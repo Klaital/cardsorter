@@ -617,6 +617,16 @@
         "userId": {
           "type": "string",
           "format": "int64"
+        },
+        "totalValue": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Total value in cents"
+        },
+        "cardCount": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Number of unique cards"
         }
       },
       "title": "Library represents a collection of cards"

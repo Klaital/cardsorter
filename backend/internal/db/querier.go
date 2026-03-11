@@ -19,7 +19,7 @@ type Querier interface {
 	GetCard(ctx context.Context, id int64) (GetCardRow, error)
 	GetCards(ctx context.Context, libraryID int64) ([]GetCardsRow, error)
 	GetLibraries(ctx context.Context, userID int64) ([]GetLibrariesRow, error)
-	GetLibrary(ctx context.Context, arg GetLibraryParams) (Library, error)
+	GetLibrary(ctx context.Context, arg GetLibraryParams) (GetLibraryRow, error)
 	GetScryfallBulkBySID(ctx context.Context, uuidTOBIN string) (ScryfallBulk, error)
 	GetScryfallBulkByType(ctx context.Context, scryfallType string) ([]ScryfallBulk, error)
 	GetScryfallCardBySID(ctx context.Context, uuidTOBIN string) (AllCard, error)

@@ -64,6 +64,8 @@ message Library {
   int64 id = 1;
   string name = 2;
   int64 user_id = 3;
+  int32 total_value = 4;  // Total value in cents
+  int32 card_count = 5;    // Number of unique cards
 }
 
 message CreateLibraryRequest {

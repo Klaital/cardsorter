@@ -226,12 +226,14 @@ const getLibraries = `-- name: GetLibraries :many
 SELECT
     l.id,
     l.name,
-    COALESCE(SUM(
+    l.user_id,
+    CAST(COALESCE(SUM(
         CASE
             WHEN c.foil = TRUE THEN COALESCE(cp.usd_foil, c.usd)
             ELSE COALESCE(cp.usd, c.usd)
         END * c.qty
-    ), 0) as total_value
+    ), 0) AS SIGNED) as total_value,
+    CAST(COALESCE(COUNT(DISTINCT c.id), 0) AS SIGNED) as card_count
 FROM
     libraries l
         LEFT JOIN cards c ON l.id = c.library_id
@@ -239,15 +241,17 @@ FROM
         LEFT JOIN card_prices cp ON ac.id = cp.card_id
 WHERE l.user_id = ?
 GROUP BY
-    l.id, l.name
+    l.id, l.name, l.user_id
 ORDER BY
     l.id
 `
 
 type GetLibrariesRow struct {
-	ID         int64       `json:"id"`
-	Name       string      `json:"name"`
-	TotalValue interface{} `json:"total_value"`
+	ID         int64  `json:"id"`
+	Name       string `json:"name"`
+	UserID     int64  `json:"user_id"`
+	TotalValue int64  `json:"total_value"`
+	CardCount  int64  `json:"card_count"`
 }
 
 func (q *Queries) GetLibraries(ctx context.Context, userID int64) ([]GetLibrariesRow, error) {
@@ -259,7 +263,13 @@ func (q *Queries) GetLibraries(ctx context.Context, userID int64) ([]GetLibrarie
 	var items []GetLibrariesRow
 	for rows.Next() {
 		var i GetLibrariesRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.TotalValue); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.UserID,
+			&i.TotalValue,
+			&i.CardCount,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -274,8 +284,27 @@ func (q *Queries) GetLibraries(ctx context.Context, userID int64) ([]GetLibrarie
 }
 
 const getLibrary = `-- name: GetLibrary :one
-SELECT id, user_id, name, created_at, updated_at FROM libraries
-WHERE id = ? AND user_id = ?
+SELECT
+    l.id,
+    l.name,
+    l.user_id,
+    l.created_at,
+    l.updated_at,
+    CAST(COALESCE(SUM(
+        CASE
+            WHEN c.foil = TRUE THEN COALESCE(cp.usd_foil, c.usd)
+            ELSE COALESCE(cp.usd, c.usd)
+        END * c.qty
+    ), 0) AS SIGNED) as total_value,
+    CAST(COALESCE(COUNT(DISTINCT c.id), 0) AS SIGNED) as card_count
+FROM
+    libraries l
+        LEFT JOIN cards c ON l.id = c.library_id
+        LEFT JOIN all_cards ac ON c.scryfall_card_id = ac.id
+        LEFT JOIN card_prices cp ON ac.id = cp.card_id
+WHERE l.id = ? AND l.user_id = ?
+GROUP BY
+    l.id, l.name, l.user_id, l.created_at, l.updated_at
 `
 
 type GetLibraryParams struct {
@@ -283,15 +312,27 @@ type GetLibraryParams struct {
 	UserID int64 `json:"user_id"`
 }
 
-func (q *Queries) GetLibrary(ctx context.Context, arg GetLibraryParams) (Library, error) {
+type GetLibraryRow struct {
+	ID         int64        `json:"id"`
+	Name       string       `json:"name"`
+	UserID     int64        `json:"user_id"`
+	CreatedAt  sql.NullTime `json:"created_at"`
+	UpdatedAt  sql.NullTime `json:"updated_at"`
+	TotalValue int64        `json:"total_value"`
+	CardCount  int64        `json:"card_count"`
+}
+
+func (q *Queries) GetLibrary(ctx context.Context, arg GetLibraryParams) (GetLibraryRow, error) {
 	row := q.queryRow(ctx, q.getLibraryStmt, getLibrary, arg.ID, arg.UserID)
-	var i Library
+	var i GetLibraryRow
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
 		&i.Name,
+		&i.UserID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TotalValue,
+		&i.CardCount,
 	)
 	return i, err
 }

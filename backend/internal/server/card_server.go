@@ -232,16 +232,24 @@ func toProtoCard(card carddb.GetCardRow) *pb.Card {
 		}
 	}
 
-	return &pb.Card{
+	pbCard := &pb.Card{
 		Id:              card.ID,
 		LibraryId:       card.LibraryID,
 		Name:            name,
-		SetId:         card.SetName,
+		SetId:           card.SetName,
 		CollectorNumber: card.CollectorNum,
 		Foil:            card.Foil.Bool,
 		UsdPrice:        price,
+		CurrentUsdPrice: price,
 		Qty:             int32(card.Qty),
 	}
+
+	// Add rarity if available
+	if card.Rarity.Valid {
+		pbCard.Rarity = card.Rarity.String
+	}
+
+	return pbCard
 }
 
 // Helper function to convert GetCardsRow to proto card
@@ -262,14 +270,22 @@ func toProtoCardFromCardsRow(card carddb.GetCardsRow) *pb.Card {
 		}
 	}
 
-	return &pb.Card{
+	pbCard := &pb.Card{
 		Id:              card.ID,
 		LibraryId:       card.LibraryID,
 		Name:            name,
-		SetId:         card.SetName,
+		SetId:           card.SetName,
 		CollectorNumber: card.CollectorNum,
 		Foil:            card.Foil.Bool,
 		UsdPrice:        price,
+		CurrentUsdPrice: price,
 		Qty:             int32(card.Qty),
 	}
+
+	// Add rarity if available
+	if card.Rarity.Valid {
+		pbCard.Rarity = card.Rarity.String
+	}
+
+	return pbCard
 }

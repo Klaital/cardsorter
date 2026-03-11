@@ -37,40 +37,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Backend (Go)
 
-Navigate to `backend/` directory for all backend development. See `backend/CLAUDE.md` for detailed commands.
+See `backend/CLAUDE.md` for detailed commands.
 
 ```bash
-cd backend
+# Build backend service (from project root)
+make backend
 
 # Build CLI tool
-go build -o cardctl.exe ./cmd/cardctl
-
-# Build backend service
-go build -o cardsorter.exe .
+cd backend && go build -o cardctl.exe ./cmd/cardctl
 
 # Run database migrations
-make migrate
+cd backend && make migrate
 
 # Regenerate Go code from SQL queries (after editing internal/db/queries/*.sql)
-sqlc generate
+cd backend && sqlc generate
 
 # Update Scryfall data
-./cardctl.exe scryfall update
+cd backend && ./cardctl.exe scryfall update
 
 # Deploy to production server
-make deploy
+cd backend && make deploy
 ```
 
 **After modifying protobuf definitions** (in `protos/` directory):
 ```bash
-# From project root
+# From project root - regenerates Go, Python, and TypeScript clients
 make protos
 
 # Then rebuild backend
-cd backend && go build -o cardsorter.exe .
-
-# Then regenerate frontend client
-cd web/frontend && npm run generate-client
+make backend
 ```
 
 ### Robot Software (Python)
@@ -181,16 +176,16 @@ make protos
 ### Adding a New API Endpoint
 
 1. **Define in protobuf**: Edit `protos/*.proto` files
-2. **Regenerate all code**: Run `make protos` from project root
-3. **Rebuild backend**: `cd backend && go build -o cardsorter.exe .`
+2. **Regenerate all code**: Run `make protos` from project root (regenerates Go, Python, TypeScript)
+3. **Rebuild backend**: Run `make backend` from project root
 4. **Implement server logic**: Edit `backend/internal/server/*_server.go`
 5. **Update database** (if needed):
    - Add migration in `backend/internal/db/schema/`
    - Run `cd backend && make migrate`
    - Update queries in `backend/internal/db/queries/*.sql`
    - Regenerate query code: `cd backend && sqlc generate`
-6. **Update frontend client**: `cd web/frontend && npm run generate-client`
-7. **Test the endpoint** with the backend running locally
+   - Rebuild: `make backend` from project root
+6. **Test the endpoint** with the backend running locally
 
 ### Updating Card Database
 

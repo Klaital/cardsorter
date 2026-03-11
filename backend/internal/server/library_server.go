@@ -69,9 +69,11 @@ func (s *LibraryServer) GetLibraries(ctx context.Context, req *pb.GetLibrariesRe
 
 	for _, lib := range libraries {
 		response.Libraries = append(response.Libraries, &pb.Library{
-			Id:     lib.ID,
-			Name:   lib.Name,
-			UserId: userID,
+			Id:         lib.ID,
+			Name:       lib.Name,
+			UserId:     lib.UserID,
+			TotalValue: int32(lib.TotalValue),
+			CardCount:  int32(lib.CardCount),
 		})
 	}
 
@@ -98,9 +100,11 @@ func (s *LibraryServer) GetLibrary(ctx context.Context, req *pb.GetLibraryReques
 
 	return &pb.GetLibraryResponse{
 		Library: &pb.Library{
-			Id:     library.ID,
-			Name:   library.Name,
-			UserId: library.UserID,
+			Id:         library.ID,
+			Name:       library.Name,
+			UserId:     library.UserID,
+			TotalValue: int32(library.TotalValue),
+			CardCount:  int32(library.CardCount),
 		},
 	}, nil
 }

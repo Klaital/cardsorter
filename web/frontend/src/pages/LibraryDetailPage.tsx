@@ -11,6 +11,7 @@ export function LibraryDetailPage() {
   const [cards, setCards] = useState<v1Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [expandedPrices, setExpandedPrices] = useState<Set<string>>(new Set());
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -57,6 +58,18 @@ export function LibraryDetailPage() {
     return `$${(cents / 100).toFixed(2)}`;
   };
 
+  const togglePriceExpanded = (cardId: string) => {
+    setExpandedPrices(prev => {
+      const next = new Set(prev);
+      if (next.has(cardId)) {
+        next.delete(cardId);
+      } else {
+        next.add(cardId);
+      }
+      return next;
+    });
+  };
+
   if (loading) {
     return (
       <div className="page-container">
@@ -85,7 +98,9 @@ export function LibraryDetailPage() {
           </Link>
           <h1>{library.name}</h1>
           <div className="library-summary">
-            <span>{cards.length} cards</span>
+            <span>{cards.length} unique cards</span>
+            <span>•</span>
+            <span>{cards.reduce((sum, card) => sum + (card.qty || 1), 0)} total copies</span>
             <span>•</span>
             <span>Total Value: {formatPrice(library.totalValue)}</span>
           </div>
@@ -111,24 +126,42 @@ export function LibraryDetailPage() {
                 <th>Collector #</th>
                 <th>Rarity</th>
                 <th>Foil</th>
+                <th className="text-center">Qty</th>
                 <th className="text-right">Price (USD)</th>
               </tr>
             </thead>
             <tbody>
-              {cards.map((card) => (
-                <tr key={card.id}>
-                  <td className="card-name">{card.name || 'Unknown'}</td>
-                  <td>{card.setId || 'N/A'}</td>
-                  <td>{card.collectorNumber || 'N/A'}</td>
-                  <td>
-                    <span className={`rarity rarity-${card.rarity?.toLowerCase()}`}>
-                      {card.rarity || 'N/A'}
-                    </span>
-                  </td>
-                  <td>{card.foil ? '✨ Yes' : 'No'}</td>
-                  <td className="text-right">{formatPrice(card.currentUsdPrice || card.usdPrice)}</td>
-                </tr>
-              ))}
+              {cards.map((card) => {
+                const unitPrice = card.currentUsdPrice || card.usdPrice || 0;
+                const qty = card.qty || 1;
+                const totalPrice = unitPrice * qty;
+                const isExpanded = expandedPrices.has(card.id || '');
+
+                return (
+                  <tr key={card.id}>
+                    <td className="card-name">{card.name || 'Unknown'}</td>
+                    <td>{card.setId || 'N/A'}</td>
+                    <td>{card.collectorNumber || 'N/A'}</td>
+                    <td>
+                      <span className={`rarity rarity-${card.rarity?.toLowerCase()}`}>
+                        {card.rarity || 'N/A'}
+                      </span>
+                    </td>
+                    <td>{card.foil ? '✨ Yes' : 'No'}</td>
+                    <td className="text-center">{qty}</td>
+                    <td
+                      className="text-right price-cell"
+                      onClick={() => togglePriceExpanded(card.id || '')}
+                      title="Click to show per-card price"
+                    >
+                      {formatPrice(totalPrice)}
+                      {isExpanded && qty > 1 && (
+                        <span className="per-card-price"> ({formatPrice(unitPrice)} ea)</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
