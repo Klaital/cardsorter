@@ -27,14 +27,20 @@ export function LibraryDetailPage() {
       setLoading(true);
       setError('');
 
+      console.log('Fetching library:', libraryId);
+
       const [libraryResponse, cardsResponse] = await Promise.all([
         LibraryServiceService.libraryServiceGetLibrary(libraryId),
-        CardsService.cardsGetCards(libraryId),
+        CardsService.cardServiceGetCards(libraryId),
       ]);
+
+      console.log('Library response:', libraryResponse);
+      console.log('Cards response:', cardsResponse);
 
       setLibrary(libraryResponse.library || null);
       setCards(cardsResponse.cards || []);
     } catch (err) {
+      console.error('Error loading library:', err);
       setError(err instanceof Error ? err.message : 'Failed to load library');
     } finally {
       setLoading(false);
