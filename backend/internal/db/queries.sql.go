@@ -11,10 +11,11 @@ import (
 )
 
 const createCard = `-- name: CreateCard :execresult
-INSERT INTO cards (library_id, name, set_name, cnd, foil, collector_num, usd, qty, scryfall_card_id)
-VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
+INSERT INTO cards (library_id, name, set_name, cnd, foil, collector_num, usd, qty, scryfall_card_id, comment)
+VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
 ON DUPLICATE KEY UPDATE
-    qty = qty + 1
+    qty = qty + 1,
+    comment = VALUES(comment)
 `
 
 type CreateCardParams struct {
@@ -26,6 +27,7 @@ type CreateCardParams struct {
 	CollectorNum   string        `json:"collector_num"`
 	Usd            int32         `json:"usd"`
 	ScryfallCardID sql.NullInt64 `json:"scryfall_card_id"`
+	Comment        string        `json:"comment"`
 }
 
 func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (sql.Result, error) {
@@ -38,6 +40,7 @@ func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (sql.Res
 		arg.CollectorNum,
 		arg.Usd,
 		arg.ScryfallCardID,
+		arg.Comment,
 	)
 }
 
@@ -96,7 +99,7 @@ func (q *Queries) DeleteLibrary(ctx context.Context, arg DeleteLibraryParams) er
 
 const getCard = `-- name: GetCard :one
 SELECT
-    c.id, c.library_id, c.name, c.set_name, c.collector_num, c.cnd, c.foil, c.usd, c.created_at, c.updated_at, c.qty, c.scryfall_card_id,
+    c.id, c.library_id, c.name, c.set_name, c.collector_num, c.cnd, c.foil, c.usd, c.created_at, c.updated_at, c.qty, c.scryfall_card_id, c.comment,
     ac.name as scryfall_name,
     ac.rarity,
     CASE
@@ -122,6 +125,7 @@ type GetCardRow struct {
 	UpdatedAt       sql.NullTime   `json:"updated_at"`
 	Qty             uint32         `json:"qty"`
 	ScryfallCardID  sql.NullInt64  `json:"scryfall_card_id"`
+	Comment         string         `json:"comment"`
 	ScryfallName    sql.NullString `json:"scryfall_name"`
 	Rarity          sql.NullString `json:"rarity"`
 	CurrentUsdPrice interface{}    `json:"current_usd_price"`
@@ -143,6 +147,7 @@ func (q *Queries) GetCard(ctx context.Context, id int64) (GetCardRow, error) {
 		&i.UpdatedAt,
 		&i.Qty,
 		&i.ScryfallCardID,
+		&i.Comment,
 		&i.ScryfallName,
 		&i.Rarity,
 		&i.CurrentUsdPrice,
@@ -152,7 +157,7 @@ func (q *Queries) GetCard(ctx context.Context, id int64) (GetCardRow, error) {
 
 const getCards = `-- name: GetCards :many
 SELECT
-    c.id, c.library_id, c.name, c.set_name, c.collector_num, c.cnd, c.foil, c.usd, c.created_at, c.updated_at, c.qty, c.scryfall_card_id,
+    c.id, c.library_id, c.name, c.set_name, c.collector_num, c.cnd, c.foil, c.usd, c.created_at, c.updated_at, c.qty, c.scryfall_card_id, c.comment,
     ac.name as scryfall_name,
     ac.rarity,
     CASE
@@ -178,6 +183,7 @@ type GetCardsRow struct {
 	UpdatedAt       sql.NullTime   `json:"updated_at"`
 	Qty             uint32         `json:"qty"`
 	ScryfallCardID  sql.NullInt64  `json:"scryfall_card_id"`
+	Comment         string         `json:"comment"`
 	ScryfallName    sql.NullString `json:"scryfall_name"`
 	Rarity          sql.NullString `json:"rarity"`
 	CurrentUsdPrice interface{}    `json:"current_usd_price"`
@@ -205,6 +211,7 @@ func (q *Queries) GetCards(ctx context.Context, libraryID int64) ([]GetCardsRow,
 			&i.UpdatedAt,
 			&i.Qty,
 			&i.ScryfallCardID,
+			&i.Comment,
 			&i.ScryfallName,
 			&i.Rarity,
 			&i.CurrentUsdPrice,
@@ -384,17 +391,23 @@ func (q *Queries) MoveCard(ctx context.Context, arg MoveCardParams) error {
 
 const updateCard = `-- name: UpdateCard :exec
 UPDATE cards
-SET name=?, usd=?
+SET name=?, usd=?, comment=?
 WHERE id=?
 `
 
 type UpdateCardParams struct {
-	Name string `json:"name"`
-	Usd  int32  `json:"usd"`
-	ID   int64  `json:"id"`
+	Name    string `json:"name"`
+	Usd     int32  `json:"usd"`
+	Comment string `json:"comment"`
+	ID      int64  `json:"id"`
 }
 
 func (q *Queries) UpdateCard(ctx context.Context, arg UpdateCardParams) error {
-	_, err := q.exec(ctx, q.updateCardStmt, updateCard, arg.Name, arg.Usd, arg.ID)
+	_, err := q.exec(ctx, q.updateCardStmt, updateCard,
+		arg.Name,
+		arg.Usd,
+		arg.Comment,
+		arg.ID,
+	)
 	return err
 }

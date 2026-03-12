@@ -24,6 +24,7 @@ const (
 	CardService_GetCards_FullMethodName   = "/card.v1.CardService/GetCards"
 	CardService_GetCard_FullMethodName    = "/card.v1.CardService/GetCard"
 	CardService_MoveCard_FullMethodName   = "/card.v1.CardService/MoveCard"
+	CardService_UpdateCard_FullMethodName = "/card.v1.CardService/UpdateCard"
 	CardService_DeleteCard_FullMethodName = "/card.v1.CardService/DeleteCard"
 )
 
@@ -39,6 +40,8 @@ type CardServiceClient interface {
 	GetCard(ctx context.Context, in *GetCardRequest, opts ...grpc.CallOption) (*GetCardResponse, error)
 	// MoveCard moves a card to a different library
 	MoveCard(ctx context.Context, in *MoveCardRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// UpdateCard updates a card's details
+	UpdateCard(ctx context.Context, in *UpdateCardRequest, opts ...grpc.CallOption) (*UpdateCardResponse, error)
 	// DeleteCard removes a card from a library
 	DeleteCard(ctx context.Context, in *DeleteCardRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -87,6 +90,15 @@ func (c *cardServiceClient) MoveCard(ctx context.Context, in *MoveCardRequest, o
 	return out, nil
 }
 
+func (c *cardServiceClient) UpdateCard(ctx context.Context, in *UpdateCardRequest, opts ...grpc.CallOption) (*UpdateCardResponse, error) {
+	out := new(UpdateCardResponse)
+	err := c.cc.Invoke(ctx, CardService_UpdateCard_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *cardServiceClient) DeleteCard(ctx context.Context, in *DeleteCardRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, CardService_DeleteCard_FullMethodName, in, out, opts...)
@@ -108,6 +120,8 @@ type CardServiceServer interface {
 	GetCard(context.Context, *GetCardRequest) (*GetCardResponse, error)
 	// MoveCard moves a card to a different library
 	MoveCard(context.Context, *MoveCardRequest) (*emptypb.Empty, error)
+	// UpdateCard updates a card's details
+	UpdateCard(context.Context, *UpdateCardRequest) (*UpdateCardResponse, error)
 	// DeleteCard removes a card from a library
 	DeleteCard(context.Context, *DeleteCardRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedCardServiceServer()
@@ -128,6 +142,9 @@ func (UnimplementedCardServiceServer) GetCard(context.Context, *GetCardRequest) 
 }
 func (UnimplementedCardServiceServer) MoveCard(context.Context, *MoveCardRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MoveCard not implemented")
+}
+func (UnimplementedCardServiceServer) UpdateCard(context.Context, *UpdateCardRequest) (*UpdateCardResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCard not implemented")
 }
 func (UnimplementedCardServiceServer) DeleteCard(context.Context, *DeleteCardRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteCard not implemented")
@@ -217,6 +234,24 @@ func _CardService_MoveCard_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CardService_UpdateCard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCardRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CardServiceServer).UpdateCard(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CardService_UpdateCard_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CardServiceServer).UpdateCard(ctx, req.(*UpdateCardRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CardService_DeleteCard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteCardRequest)
 	if err := dec(in); err != nil {
@@ -257,6 +292,10 @@ var CardService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MoveCard",
 			Handler:    _CardService_MoveCard_Handler,
+		},
+		{
+			MethodName: "UpdateCard",
+			Handler:    _CardService_UpdateCard_Handler,
 		},
 		{
 			MethodName: "DeleteCard",

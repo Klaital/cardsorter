@@ -34,6 +34,7 @@ type Card struct {
 	UpdatedAt      sql.NullTime  `json:"updated_at"`
 	Qty            uint32        `json:"qty"`
 	ScryfallCardID sql.NullInt64 `json:"scryfall_card_id"`
+	Comment        string        `json:"comment"`
 }
 
 type CardFace struct {

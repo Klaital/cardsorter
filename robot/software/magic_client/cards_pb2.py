@@ -24,10 +24,11 @@ _sym_db = _symbol_database.Default()
 
 from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
+from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 from protoc_gen_openapiv2.options import annotations_pb2 as protoc__gen__openapiv2_dot_options_dot_annotations__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x63\x61rds.proto\x12\x07\x63\x61rd.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x90\x04\n\x04\x43\x61rd\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n\nlibrary_id\x18\x02 \x01(\x03R\tlibraryId\x12\x12\n\x04name\x18\x03 \x01(\tR\x04name\x12.\n\x06set_id\x18\x04 \x01(\tB\x17\x92\x41\x14\x32\x12Set ID, e.g. \'FIN\'R\x05setId\x12\x44\n\tcondition\x18\x05 \x01(\tB&\x92\x41#2!Description of the card conditionR\tcondition\x12\x12\n\x04\x66oil\x18\x06 \x01(\x08R\x04\x66oil\x12`\n\x10\x63ollector_number\x18\x07 \x01(\tB5\x92\x41\x32\x32\x30The collection number for this card, e.g. \'0210\'R\x0f\x63ollectorNumber\x12\x1b\n\tusd_price\x18\x08 \x01(\x05R\x08usdPrice\x12\x10\n\x03qty\x18\t \x01(\x05R\x03qty\x12I\n\x06rarity\x18\n \x01(\tB1\x92\x41.2,Card rarity (common, uncommon, rare, mythic)R\x06rarity\x12_\n\x11\x63urrent_usd_price\x18\x0b \x01(\x05\x42\x33\x92\x41\x30\x32.Current market price in USD cents (foil-aware)R\x0f\x63urrentUsdPrice\"\xdb\x01\n\x11\x43reateCardRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n\x08set_name\x18\x03 \x01(\tR\x07setName\x12\x1c\n\tcondition\x18\x04 \x01(\tR\tcondition\x12\x12\n\x04\x66oil\x18\x05 \x01(\x08R\x04\x66oil\x12)\n\x10\x63ollector_number\x18\x06 \x01(\tR\x0f\x63ollectorNumber\x12\x1b\n\tusd_price\x18\x07 \x01(\x05R\x08usdPrice\"7\n\x12\x43reateCardResponse\x12!\n\x04\x63\x61rd\x18\x01 \x01(\x0b\x32\r.card.v1.CardR\x04\x63\x61rd\"0\n\x0fGetCardsRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\"7\n\x10GetCardsResponse\x12#\n\x05\x63\x61rds\x18\x01 \x03(\x0b\x32\r.card.v1.CardR\x05\x63\x61rds\"H\n\x0eGetCardRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\x12\x17\n\x07\x63\x61rd_id\x18\x02 \x01(\x03R\x06\x63\x61rdId\"4\n\x0fGetCardResponse\x12!\n\x04\x63\x61rd\x18\x01 \x01(\x0b\x32\r.card.v1.CardR\x04\x63\x61rd\"I\n\x0fMoveCardRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\x12\x17\n\x07\x63\x61rd_id\x18\x02 \x01(\x03R\x06\x63\x61rdId\"K\n\x11\x44\x65leteCardRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\x12\x17\n\x07\x63\x61rd_id\x18\x02 \x01(\x03R\x06\x63\x61rdId2\xb5\x08\n\x0b\x43\x61rdService\x12\xbc\x01\n\nCreateCard\x12\x1a.card.v1.CreateCardRequest\x1a\x1b.card.v1.CreateCardResponse\"u\x92\x41G\n\x05\x63\x61rds\x12\x11\x43reate a new card\x1a+Creates a new card in the specified library\x82\xd3\xe4\x93\x02%\" /v1/libraries/{library_id}/cards:\x01*\x12\xc8\x01\n\x08GetCards\x12\x18.card.v1.GetCardsRequest\x1a\x19.card.v1.GetCardsResponse\"\x86\x01\x92\x41[\n\x05\x63\x61rds\x12(Fetch the cards in the specified library\x1a(Fetch the cards in the specified library\x82\xd3\xe4\x93\x02\"\x12 /v1/libraries/{library_id}/cards\x12\xe7\x01\n\x07GetCard\x12\x17.card.v1.GetCardRequest\x1a\x18.card.v1.GetCardResponse\"\xa8\x01\x92\x41s\n\x05\x63\x61rds\x12\x34\x46\x65tch the details for a specific card from a library\x1a\x34\x46\x65tch the details for a specific card from a library\x82\xd3\xe4\x93\x02,\x12*/v1/libraries/{library_id}/cards/{card_id}\x12\xd5\x01\n\x08MoveCard\x12\x18.card.v1.MoveCardRequest\x1a\x16.google.protobuf.Empty\"\x96\x01\x92\x41Y\n\x05\x63\x61rds\x12\'Move a card from one library to another\x1a\'Move a card from one library to another\x82\xd3\xe4\x93\x02\x34\"//v1/libraries/{library_id}/cards/{card_id}/move:\x01*\x12\xd9\x01\n\nDeleteCard\x12\x1a.card.v1.DeleteCardRequest\x1a\x16.google.protobuf.Empty\"\x96\x01\x92\x41\x61\n\x05\x63\x61rds\x12+Delete all copies of a card from a library.\x1a+Delete all copies of a card from a library.\x82\xd3\xe4\x93\x02,**/v1/libraries/{library_id}/cards/{card_id}B\xbe\x01Z7github.com/klaital/cardsorter/backend/gen/protos;cardv1\x92\x41\x81\x01\x12\x7f\n\x10\x43\x61rd Service API\x12*API for managing cards in your collections\":\n\x11\x43\x61rd Service Team\x12%https://github.com/klaital/cardsorter2\x03\x31.0b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x63\x61rds.proto\x12\x07\x63\x61rd.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xca\x05\n\x04\x43\x61rd\x12\x0e\n\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n\nlibrary_id\x18\x02 \x01(\x03R\tlibraryId\x12\x12\n\x04name\x18\x03 \x01(\tR\x04name\x12.\n\x06set_id\x18\x04 \x01(\tB\x17\x92\x41\x14\x32\x12Set ID, e.g. \'FIN\'R\x05setId\x12\x44\n\tcondition\x18\x05 \x01(\tB&\x92\x41#2!Description of the card conditionR\tcondition\x12\x12\n\x04\x66oil\x18\x06 \x01(\x08R\x04\x66oil\x12`\n\x10\x63ollector_number\x18\x07 \x01(\tB5\x92\x41\x32\x32\x30The collection number for this card, e.g. \'0210\'R\x0f\x63ollectorNumber\x12\x1b\n\tusd_price\x18\x08 \x01(\x05R\x08usdPrice\x12\x10\n\x03qty\x18\t \x01(\x05R\x03qty\x12I\n\x06rarity\x18\n \x01(\tB1\x92\x41.2,Card rarity (common, uncommon, rare, mythic)R\x06rarity\x12_\n\x11\x63urrent_usd_price\x18\x0b \x01(\x05\x42\x33\x92\x41\x30\x32.Current market price in USD cents (foil-aware)R\x0f\x63urrentUsdPrice\x12\x43\n\x07\x63omment\x18\x0c \x01(\tB)\x92\x41&2$User comment or note about this cardR\x07\x63omment\x12s\n\ncreated_at\x18\r \x01(\x0b\x32\x1a.google.protobuf.TimestampB8\x92\x41\x35\x32\x33Timestamp when the card was added to the collectionR\tcreatedAt\"\xf5\x01\n\x11\x43reateCardRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\x12\x12\n\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n\x08set_name\x18\x03 \x01(\tR\x07setName\x12\x1c\n\tcondition\x18\x04 \x01(\tR\tcondition\x12\x12\n\x04\x66oil\x18\x05 \x01(\x08R\x04\x66oil\x12)\n\x10\x63ollector_number\x18\x06 \x01(\tR\x0f\x63ollectorNumber\x12\x1b\n\tusd_price\x18\x07 \x01(\x05R\x08usdPrice\x12\x18\n\x07\x63omment\x18\x08 \x01(\tR\x07\x63omment\"7\n\x12\x43reateCardResponse\x12!\n\x04\x63\x61rd\x18\x01 \x01(\x0b\x32\r.card.v1.CardR\x04\x63\x61rd\"0\n\x0fGetCardsRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\"7\n\x10GetCardsResponse\x12#\n\x05\x63\x61rds\x18\x01 \x03(\x0b\x32\r.card.v1.CardR\x05\x63\x61rds\"H\n\x0eGetCardRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\x12\x17\n\x07\x63\x61rd_id\x18\x02 \x01(\x03R\x06\x63\x61rdId\"4\n\x0fGetCardResponse\x12!\n\x04\x63\x61rd\x18\x01 \x01(\x0b\x32\r.card.v1.CardR\x04\x63\x61rd\"I\n\x0fMoveCardRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\x12\x17\n\x07\x63\x61rd_id\x18\x02 \x01(\x03R\x06\x63\x61rdId\"e\n\x11UpdateCardRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\x12\x17\n\x07\x63\x61rd_id\x18\x02 \x01(\x03R\x06\x63\x61rdId\x12\x18\n\x07\x63omment\x18\x03 \x01(\tR\x07\x63omment\"7\n\x12UpdateCardResponse\x12!\n\x04\x63\x61rd\x18\x01 \x01(\x0b\x32\r.card.v1.CardR\x04\x63\x61rd\"K\n\x11\x44\x65leteCardRequest\x12\x1d\n\nlibrary_id\x18\x01 \x01(\x03R\tlibraryId\x12\x17\n\x07\x63\x61rd_id\x18\x02 \x01(\x03R\x06\x63\x61rdId2\xf0\t\n\x0b\x43\x61rdService\x12\xbc\x01\n\nCreateCard\x12\x1a.card.v1.CreateCardRequest\x1a\x1b.card.v1.CreateCardResponse\"u\x92\x41G\n\x05\x63\x61rds\x12\x11\x43reate a new card\x1a+Creates a new card in the specified library\x82\xd3\xe4\x93\x02%\" /v1/libraries/{library_id}/cards:\x01*\x12\xc8\x01\n\x08GetCards\x12\x18.card.v1.GetCardsRequest\x1a\x19.card.v1.GetCardsResponse\"\x86\x01\x92\x41[\n\x05\x63\x61rds\x12(Fetch the cards in the specified library\x1a(Fetch the cards in the specified library\x82\xd3\xe4\x93\x02\"\x12 /v1/libraries/{library_id}/cards\x12\xe7\x01\n\x07GetCard\x12\x17.card.v1.GetCardRequest\x1a\x18.card.v1.GetCardResponse\"\xa8\x01\x92\x41s\n\x05\x63\x61rds\x12\x34\x46\x65tch the details for a specific card from a library\x1a\x34\x46\x65tch the details for a specific card from a library\x82\xd3\xe4\x93\x02,\x12*/v1/libraries/{library_id}/cards/{card_id}\x12\xd5\x01\n\x08MoveCard\x12\x18.card.v1.MoveCardRequest\x1a\x16.google.protobuf.Empty\"\x96\x01\x92\x41Y\n\x05\x63\x61rds\x12\'Move a card from one library to another\x1a\'Move a card from one library to another\x82\xd3\xe4\x93\x02\x34\"//v1/libraries/{library_id}/cards/{card_id}/move:\x01*\x12\xb8\x01\n\nUpdateCard\x12\x1a.card.v1.UpdateCardRequest\x1a\x1b.card.v1.UpdateCardResponse\"q\x92\x41\x39\n\x05\x63\x61rds\x12\x17Update a card\'s comment\x1a\x17Update a card\'s comment\x82\xd3\xe4\x93\x02/2*/v1/libraries/{library_id}/cards/{card_id}:\x01*\x12\xd9\x01\n\nDeleteCard\x12\x1a.card.v1.DeleteCardRequest\x1a\x16.google.protobuf.Empty\"\x96\x01\x92\x41\x61\n\x05\x63\x61rds\x12+Delete all copies of a card from a library.\x1a+Delete all copies of a card from a library.\x82\xd3\xe4\x93\x02,**/v1/libraries/{library_id}/cards/{card_id}B\xbe\x01Z7github.com/klaital/cardsorter/backend/gen/protos;cardv1\x92\x41\x81\x01\x12\x7f\n\x10\x43\x61rd Service API\x12*API for managing cards in your collections\":\n\x11\x43\x61rd Service Team\x12%https://github.com/klaital/cardsorter2\x03\x31.0b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -45,6 +46,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_CARD'].fields_by_name['rarity']._serialized_options = b'\222A.2,Card rarity (common, uncommon, rare, mythic)'
   _globals['_CARD'].fields_by_name['current_usd_price']._loaded_options = None
   _globals['_CARD'].fields_by_name['current_usd_price']._serialized_options = b'\222A02.Current market price in USD cents (foil-aware)'
+  _globals['_CARD'].fields_by_name['comment']._loaded_options = None
+  _globals['_CARD'].fields_by_name['comment']._serialized_options = b'\222A&2$User comment or note about this card'
+  _globals['_CARD'].fields_by_name['created_at']._loaded_options = None
+  _globals['_CARD'].fields_by_name['created_at']._serialized_options = b'\222A523Timestamp when the card was added to the collection'
   _globals['_CARDSERVICE'].methods_by_name['CreateCard']._loaded_options = None
   _globals['_CARDSERVICE'].methods_by_name['CreateCard']._serialized_options = b'\222AG\n\005cards\022\021Create a new card\032+Creates a new card in the specified library\202\323\344\223\002%\" /v1/libraries/{library_id}/cards:\001*'
   _globals['_CARDSERVICE'].methods_by_name['GetCards']._loaded_options = None
@@ -53,26 +58,32 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_CARDSERVICE'].methods_by_name['GetCard']._serialized_options = b'\222As\n\005cards\0224Fetch the details for a specific card from a library\0324Fetch the details for a specific card from a library\202\323\344\223\002,\022*/v1/libraries/{library_id}/cards/{card_id}'
   _globals['_CARDSERVICE'].methods_by_name['MoveCard']._loaded_options = None
   _globals['_CARDSERVICE'].methods_by_name['MoveCard']._serialized_options = b'\222AY\n\005cards\022\'Move a card from one library to another\032\'Move a card from one library to another\202\323\344\223\0024\"//v1/libraries/{library_id}/cards/{card_id}/move:\001*'
+  _globals['_CARDSERVICE'].methods_by_name['UpdateCard']._loaded_options = None
+  _globals['_CARDSERVICE'].methods_by_name['UpdateCard']._serialized_options = b'\222A9\n\005cards\022\027Update a card\'s comment\032\027Update a card\'s comment\202\323\344\223\002/2*/v1/libraries/{library_id}/cards/{card_id}:\001*'
   _globals['_CARDSERVICE'].methods_by_name['DeleteCard']._loaded_options = None
   _globals['_CARDSERVICE'].methods_by_name['DeleteCard']._serialized_options = b'\222Aa\n\005cards\022+Delete all copies of a card from a library.\032+Delete all copies of a card from a library.\202\323\344\223\002,**/v1/libraries/{library_id}/cards/{card_id}'
-  _globals['_CARD']._serialized_start=132
-  _globals['_CARD']._serialized_end=660
-  _globals['_CREATECARDREQUEST']._serialized_start=663
-  _globals['_CREATECARDREQUEST']._serialized_end=882
-  _globals['_CREATECARDRESPONSE']._serialized_start=884
-  _globals['_CREATECARDRESPONSE']._serialized_end=939
-  _globals['_GETCARDSREQUEST']._serialized_start=941
-  _globals['_GETCARDSREQUEST']._serialized_end=989
-  _globals['_GETCARDSRESPONSE']._serialized_start=991
-  _globals['_GETCARDSRESPONSE']._serialized_end=1046
-  _globals['_GETCARDREQUEST']._serialized_start=1048
-  _globals['_GETCARDREQUEST']._serialized_end=1120
-  _globals['_GETCARDRESPONSE']._serialized_start=1122
-  _globals['_GETCARDRESPONSE']._serialized_end=1174
-  _globals['_MOVECARDREQUEST']._serialized_start=1176
-  _globals['_MOVECARDREQUEST']._serialized_end=1249
-  _globals['_DELETECARDREQUEST']._serialized_start=1251
-  _globals['_DELETECARDREQUEST']._serialized_end=1326
-  _globals['_CARDSERVICE']._serialized_start=1329
-  _globals['_CARDSERVICE']._serialized_end=2406
+  _globals['_CARD']._serialized_start=165
+  _globals['_CARD']._serialized_end=879
+  _globals['_CREATECARDREQUEST']._serialized_start=882
+  _globals['_CREATECARDREQUEST']._serialized_end=1127
+  _globals['_CREATECARDRESPONSE']._serialized_start=1129
+  _globals['_CREATECARDRESPONSE']._serialized_end=1184
+  _globals['_GETCARDSREQUEST']._serialized_start=1186
+  _globals['_GETCARDSREQUEST']._serialized_end=1234
+  _globals['_GETCARDSRESPONSE']._serialized_start=1236
+  _globals['_GETCARDSRESPONSE']._serialized_end=1291
+  _globals['_GETCARDREQUEST']._serialized_start=1293
+  _globals['_GETCARDREQUEST']._serialized_end=1365
+  _globals['_GETCARDRESPONSE']._serialized_start=1367
+  _globals['_GETCARDRESPONSE']._serialized_end=1419
+  _globals['_MOVECARDREQUEST']._serialized_start=1421
+  _globals['_MOVECARDREQUEST']._serialized_end=1494
+  _globals['_UPDATECARDREQUEST']._serialized_start=1496
+  _globals['_UPDATECARDREQUEST']._serialized_end=1597
+  _globals['_UPDATECARDRESPONSE']._serialized_start=1599
+  _globals['_UPDATECARDRESPONSE']._serialized_end=1654
+  _globals['_DELETECARDREQUEST']._serialized_start=1656
+  _globals['_DELETECARDREQUEST']._serialized_end=1731
+  _globals['_CARDSERVICE']._serialized_start=1734
+  _globals['_CARDSERVICE']._serialized_end=2998
 # @@protoc_insertion_point(module_scope)

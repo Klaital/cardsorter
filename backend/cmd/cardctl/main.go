@@ -154,7 +154,7 @@ func main() {
 	}
 	defer db.Close()
 	if err := db.Ping(); err != nil {
-		slog.Error("failed the initial db ping", "err", err, "connstring", cfg.MysqlDbStringRedacted())
+		slog.Error("failed the initial db ping", "err", err, "connstring", cfg.MysqlDbString())
 		// TODO: should we wait/retry here? Do we ever wait for the db to be created?
 		os.Exit(1)
 	}
@@ -165,7 +165,7 @@ func main() {
 	// For other commands, fetch the default user
 	var user carddb.User
 	if ctx.Command() != "user list" && ctx.Command() != "user create <email> <password>" &&
-	   !strings.HasPrefix(ctx.Command(), "user change-password") {
+		!strings.HasPrefix(ctx.Command(), "user change-password") {
 		user, err = queries.GetUser(context.Background(), "kenkaku@gmail.com")
 		if err != nil {
 			slog.Error("Failed to fetch user", "err", err)

@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"log/slog"
 )
 
@@ -49,6 +50,7 @@ func (s *CardServer) CreateCard(ctx context.Context, req *pb.CreateCardRequest) 
 		Foil:         sql.NullBool{Bool: req.Foil, Valid: true},
 		CollectorNum: req.CollectorNumber,
 		Usd:          req.UsdPrice,
+		Comment:      req.Comment,
 	})
 	if err != nil {
 		slog.Error("Failed to create card", "err", err.Error())
@@ -183,6 +185,59 @@ func (s *CardServer) MoveCard(ctx context.Context, req *pb.MoveCardRequest) (*em
 	return &emptypb.Empty{}, nil
 }
 
+func (s *CardServer) UpdateCard(ctx context.Context, req *pb.UpdateCardRequest) (*pb.UpdateCardResponse, error) {
+	userID, err := getUserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	queries := carddb.New(s.db)
+
+	// Verify library ownership
+	_, err = queries.GetLibrary(ctx, carddb.GetLibraryParams{
+		ID:     req.LibraryId,
+		UserID: userID,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "library not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to verify library ownership")
+	}
+
+	// Get current card to preserve existing data
+	card, err := queries.GetCard(ctx, req.CardId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "card not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to fetch card")
+	}
+
+	// Update the card
+	err = queries.UpdateCard(ctx, carddb.UpdateCardParams{
+		ID:      req.CardId,
+		Name:    card.Name,
+		Usd:     card.Usd,
+		Comment: req.Comment,
+	})
+	if err != nil {
+		slog.Error("Failed to update card", "err", err.Error())
+		return nil, status.Error(codes.Internal, "failed to update card")
+	}
+
+	// Fetch updated card
+	updatedCard, err := queries.GetCard(ctx, req.CardId)
+	if err != nil {
+		slog.Error("Failed to fetch updated card", "err", err)
+		return nil, status.Error(codes.Internal, "failed to fetch updated card")
+	}
+
+	return &pb.UpdateCardResponse{
+		Card: toProtoCard(updatedCard),
+	}, nil
+}
+
 func (s *CardServer) DeleteCard(ctx context.Context, req *pb.DeleteCardRequest) (*emptypb.Empty, error) {
 	userID, err := getUserIDFromContext(ctx)
 	if err != nil {
@@ -242,11 +297,17 @@ func toProtoCard(card carddb.GetCardRow) *pb.Card {
 		UsdPrice:        price,
 		CurrentUsdPrice: price,
 		Qty:             int32(card.Qty),
+		Comment:         card.Comment,
 	}
 
 	// Add rarity if available
 	if card.Rarity.Valid {
 		pbCard.Rarity = card.Rarity.String
+	}
+
+	// Add created_at timestamp
+	if card.CreatedAt.Valid {
+		pbCard.CreatedAt = timestamppb.New(card.CreatedAt.Time)
 	}
 
 	return pbCard
@@ -280,11 +341,17 @@ func toProtoCardFromCardsRow(card carddb.GetCardsRow) *pb.Card {
 		UsdPrice:        price,
 		CurrentUsdPrice: price,
 		Qty:             int32(card.Qty),
+		Comment:         card.Comment,
 	}
 
 	// Add rarity if available
 	if card.Rarity.Valid {
 		pbCard.Rarity = card.Rarity.String
+	}
+
+	// Add created_at timestamp
+	if card.CreatedAt.Valid {
+		pbCard.CreatedAt = timestamppb.New(card.CreatedAt.Time)
 	}
 
 	return pbCard

@@ -12,6 +12,10 @@ export function LibraryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedPrices, setExpandedPrices] = useState<Set<string>>(new Set());
+  const [editingComment, setEditingComment] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState<string>('');
+  const [sortColumn, setSortColumn] = useState<string>('created_at');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -70,6 +74,99 @@ export function LibraryDetailPage() {
     });
   };
 
+  const startEditingComment = (cardId: string, currentComment: string) => {
+    setEditingComment(cardId);
+    setCommentText(currentComment || '');
+  };
+
+  const cancelEditingComment = () => {
+    setEditingComment(null);
+    setCommentText('');
+  };
+
+  const saveComment = async (cardId: string) => {
+    if (!libraryId) return;
+
+    try {
+      await CardsService.cardServiceUpdateCard(libraryId, cardId, { comment: commentText });
+      // Reload cards to get updated data
+      await loadLibraryData();
+      setEditingComment(null);
+      setCommentText('');
+    } catch (err) {
+      console.error('Error updating comment:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update comment');
+    }
+  };
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to ascending (except for created_at which defaults to descending)
+      setSortColumn(column);
+      setSortDirection(column === 'created_at' ? 'desc' : 'asc');
+    }
+  };
+
+  const getSortedCards = () => {
+    return [...cards].sort((a, b) => {
+      let aVal: any;
+      let bVal: any;
+
+      switch (sortColumn) {
+        case 'name':
+          aVal = a.name?.toLowerCase() || '';
+          bVal = b.name?.toLowerCase() || '';
+          break;
+        case 'set':
+          aVal = a.setId?.toLowerCase() || '';
+          bVal = b.setId?.toLowerCase() || '';
+          break;
+        case 'collector_number':
+          aVal = a.collectorNumber || '';
+          bVal = b.collectorNumber || '';
+          break;
+        case 'rarity':
+          aVal = a.rarity?.toLowerCase() || '';
+          bVal = b.rarity?.toLowerCase() || '';
+          break;
+        case 'foil':
+          aVal = a.foil ? 1 : 0;
+          bVal = b.foil ? 1 : 0;
+          break;
+        case 'qty':
+          aVal = a.qty || 0;
+          bVal = b.qty || 0;
+          break;
+        case 'price':
+          aVal = (a.currentUsdPrice || a.usdPrice || 0) * (a.qty || 1);
+          bVal = (b.currentUsdPrice || b.usdPrice || 0) * (b.qty || 1);
+          break;
+        case 'comment':
+          aVal = a.comment?.toLowerCase() || '';
+          bVal = b.comment?.toLowerCase() || '';
+          break;
+        case 'created_at':
+          aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
+  const getSortIndicator = (column: string) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === 'asc' ? ' ↑' : ' ↓';
+  };
+
   if (loading) {
     return (
       <div className="page-container">
@@ -121,21 +218,42 @@ export function LibraryDetailPage() {
           <table className="cards-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Set</th>
-                <th>Collector #</th>
-                <th>Rarity</th>
-                <th>Foil</th>
-                <th className="text-center">Qty</th>
-                <th className="text-right">Price (USD)</th>
+                <th onClick={() => handleSort('name')} className="sortable">
+                  Name{getSortIndicator('name')}
+                </th>
+                <th onClick={() => handleSort('set')} className="sortable">
+                  Set{getSortIndicator('set')}
+                </th>
+                <th onClick={() => handleSort('collector_number')} className="sortable">
+                  Collector #{getSortIndicator('collector_number')}
+                </th>
+                <th onClick={() => handleSort('rarity')} className="sortable">
+                  Rarity{getSortIndicator('rarity')}
+                </th>
+                <th onClick={() => handleSort('foil')} className="sortable">
+                  Foil{getSortIndicator('foil')}
+                </th>
+                <th onClick={() => handleSort('qty')} className="text-center sortable">
+                  Qty{getSortIndicator('qty')}
+                </th>
+                <th onClick={() => handleSort('price')} className="text-right sortable">
+                  Price (USD){getSortIndicator('price')}
+                </th>
+                <th onClick={() => handleSort('comment')} className="sortable">
+                  Comment{getSortIndicator('comment')}
+                </th>
+                <th onClick={() => handleSort('created_at')} className="sortable">
+                  Added{getSortIndicator('created_at')}
+                </th>
               </tr>
             </thead>
             <tbody>
-              {cards.map((card) => {
+              {getSortedCards().map((card) => {
                 const unitPrice = card.currentUsdPrice || card.usdPrice || 0;
                 const qty = card.qty || 1;
                 const totalPrice = unitPrice * qty;
                 const isExpanded = expandedPrices.has(card.id || '');
+                const createdDate = card.createdAt ? new Date(card.createdAt) : null;
 
                 return (
                   <tr key={card.id}>
@@ -157,6 +275,59 @@ export function LibraryDetailPage() {
                       {formatPrice(totalPrice)}
                       {isExpanded && qty > 1 && (
                         <span className="per-card-price"> ({formatPrice(unitPrice)} ea)</span>
+                      )}
+                    </td>
+                    <td className="comment-cell">
+                      {editingComment === card.id ? (
+                        <div className="comment-edit">
+                          <input
+                            type="text"
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                saveComment(card.id || '');
+                              } else if (e.key === 'Escape') {
+                                cancelEditingComment();
+                              }
+                            }}
+                            autoFocus
+                            placeholder="Add a comment..."
+                          />
+                          <div className="comment-actions">
+                            <button
+                              onClick={() => saveComment(card.id || '')}
+                              className="save-button"
+                              title="Save (Enter)"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              onClick={cancelEditingComment}
+                              className="cancel-button"
+                              title="Cancel (Esc)"
+                            >
+                              ✗
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          className="comment-display"
+                          onClick={() => startEditingComment(card.id || '', card.comment || '')}
+                          title="Click to edit"
+                        >
+                          {card.comment || <span className="comment-placeholder">Add comment...</span>}
+                        </div>
+                      )}
+                    </td>
+                    <td className="date-cell">
+                      {createdDate ? (
+                        <span title={createdDate.toLocaleString()}>
+                          {createdDate.toLocaleDateString()}
+                        </span>
+                      ) : (
+                        'N/A'
                       )}
                     </td>
                   </tr>

@@ -294,6 +294,52 @@
         "tags": [
           "cards"
         ]
+      },
+      "patch": {
+        "summary": "Update a card's comment",
+        "description": "Update a card's comment",
+        "operationId": "CardService_UpdateCard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateCardResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "libraryId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "cardId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CardServiceUpdateCardBody"
+            }
+          }
+        ],
+        "tags": [
+          "cards"
+        ]
       }
     },
     "/v1/libraries/{libraryId}/cards/{cardId}/move": {
@@ -434,11 +480,22 @@
         "usdPrice": {
           "type": "integer",
           "format": "int32"
+        },
+        "comment": {
+          "type": "string"
         }
       }
     },
     "CardServiceMoveCardBody": {
       "type": "object"
+    },
+    "CardServiceUpdateCardBody": {
+      "type": "object",
+      "properties": {
+        "comment": {
+          "type": "string"
+        }
+      }
     },
     "protobufAny": {
       "type": "object",
@@ -513,6 +570,15 @@
           "type": "integer",
           "format": "int32",
           "description": "Current market price in USD cents (foil-aware)"
+        },
+        "comment": {
+          "type": "string",
+          "description": "User comment or note about this card"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the card was added to the collection"
         }
       }
     },
@@ -651,6 +717,14 @@
         },
         "token": {
           "type": "string"
+        }
+      }
+    },
+    "v1UpdateCardResponse": {
+      "type": "object",
+      "properties": {
+        "card": {
+          "$ref": "#/definitions/v1Card"
         }
       }
     }

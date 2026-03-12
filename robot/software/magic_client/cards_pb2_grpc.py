@@ -35,6 +35,11 @@ class CardServiceStub(object):
                 request_serializer=cards__pb2.MoveCardRequest.SerializeToString,
                 response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 _registered_method=True)
+        self.UpdateCard = channel.unary_unary(
+                '/card.v1.CardService/UpdateCard',
+                request_serializer=cards__pb2.UpdateCardRequest.SerializeToString,
+                response_deserializer=cards__pb2.UpdateCardResponse.FromString,
+                _registered_method=True)
         self.DeleteCard = channel.unary_unary(
                 '/card.v1.CardService/DeleteCard',
                 request_serializer=cards__pb2.DeleteCardRequest.SerializeToString,
@@ -73,6 +78,13 @@ class CardServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def UpdateCard(self, request, context):
+        """UpdateCard updates a card's details
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def DeleteCard(self, request, context):
         """DeleteCard removes a card from a library
         """
@@ -102,6 +114,11 @@ def add_CardServiceServicer_to_server(servicer, server):
                     servicer.MoveCard,
                     request_deserializer=cards__pb2.MoveCardRequest.FromString,
                     response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+            'UpdateCard': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateCard,
+                    request_deserializer=cards__pb2.UpdateCardRequest.FromString,
+                    response_serializer=cards__pb2.UpdateCardResponse.SerializeToString,
             ),
             'DeleteCard': grpc.unary_unary_rpc_method_handler(
                     servicer.DeleteCard,
@@ -217,6 +234,33 @@ class CardService(object):
             '/card.v1.CardService/MoveCard',
             cards__pb2.MoveCardRequest.SerializeToString,
             google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateCard(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/card.v1.CardService/UpdateCard',
+            cards__pb2.UpdateCardRequest.SerializeToString,
+            cards__pb2.UpdateCardResponse.FromString,
             options,
             channel_credentials,
             insecure,

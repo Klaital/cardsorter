@@ -46,6 +46,17 @@
   color: #888;
 }
 
+.cards-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+}
+
+.cards-table th.sortable:hover {
+  color: #646cff;
+  background: rgba(100, 108, 255, 0.1);
+}
+
 .cards-table td {
   padding: 0.875rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -118,6 +129,93 @@
   color: #ff8c42;
 }
 
+.comment-cell {
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.comment-display {
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+  min-height: 1.5rem;
+}
+
+.comment-display:hover {
+  background: rgba(100, 108, 255, 0.1);
+}
+
+.comment-placeholder {
+  color: #666;
+  font-style: italic;
+  opacity: 0.5;
+}
+
+.comment-edit {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.comment-edit input {
+  flex: 1;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: inherit;
+}
+
+.comment-edit input:focus {
+  outline: none;
+  border-color: #646cff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.comment-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.comment-actions button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 28px;
+}
+
+.comment-actions .save-button {
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+}
+
+.comment-actions .save-button:hover {
+  background: rgba(34, 197, 94, 0.3);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.comment-actions .cancel-button {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.comment-actions .cancel-button:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.date-cell {
+  white-space: nowrap;
+  color: #888;
+  font-size: 0.9rem;
+}
+
 @media (prefers-color-scheme: light) {
   .table-container {
     background: white;
@@ -159,6 +257,46 @@
 
   .per-card-price {
     color: #666;
+  }
+
+  .comment-edit input {
+    background: white;
+    border-color: #d0d0d0;
+  }
+
+  .comment-edit input:focus {
+    border-color: #646cff;
+    background: #f9f9f9;
+  }
+
+  .comment-placeholder {
+    color: #999;
+  }
+
+  .comment-actions .save-button {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+  }
+
+  .comment-actions .save-button:hover {
+    background: rgba(34, 197, 94, 0.15);
+  }
+
+  .comment-actions .cancel-button {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+  }
+
+  .comment-actions .cancel-button:hover {
+    background: rgba(239, 68, 68, 0.15);
+  }
+
+  .date-cell {
+    color: #666;
+  }
+
+  .cards-table th.sortable:hover {
+    color: #535bf2;
   }
 }
 
