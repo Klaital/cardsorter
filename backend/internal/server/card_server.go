@@ -163,7 +163,7 @@ func (s *CardServer) MoveCard(ctx context.Context, req *pb.MoveCardRequest) (*em
 
 	// Verify destination library ownership
 	_, err = queries.GetLibrary(ctx, carddb.GetLibraryParams{
-		ID:     req.LibraryId,
+		ID:     req.DestinationLibraryId,
 		UserID: userID,
 	})
 	if err != nil {
@@ -175,7 +175,7 @@ func (s *CardServer) MoveCard(ctx context.Context, req *pb.MoveCardRequest) (*em
 
 	err = queries.MoveCard(ctx, carddb.MoveCardParams{
 		ID:        req.CardId,
-		LibraryID: req.LibraryId,
+		LibraryID: req.DestinationLibraryId,
 	})
 	if err != nil {
 		slog.Error("failed to move card", "err", err, "card", req.CardId, "library", req.LibraryId, "user", userID)

@@ -216,6 +216,91 @@
   font-size: 0.9rem;
 }
 
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.move-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  background-color: #646cff;
+  border: 1px solid #646cff;
+  color: white;
+}
+
+.move-button:hover {
+  background-color: #535bf2;
+}
+
+.checkbox-column {
+  width: 40px;
+  text-align: center;
+}
+
+.checkbox-column input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.cards-table tbody tr.selected {
+  background: rgba(100, 108, 255, 0.15);
+}
+
+.cards-table tbody tr.selected:hover {
+  background: rgba(100, 108, 255, 0.2);
+}
+
+.modal-description {
+  color: #888;
+  margin-bottom: 1.5rem;
+}
+
+.library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.library-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.library-option:hover:not(:disabled) {
+  background: rgba(100, 108, 255, 0.1);
+  border-color: #646cff;
+  transform: translateX(4px);
+}
+
+.library-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.library-name {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.library-info {
+  color: #888;
+  font-size: 0.9rem;
+}
+
 @media (prefers-color-scheme: light) {
   .table-container {
     background: white;
@@ -297,6 +382,31 @@
 
   .cards-table th.sortable:hover {
     color: #535bf2;
+  }
+
+  .cards-table tbody tr.selected {
+    background: rgba(100, 108, 255, 0.1);
+  }
+
+  .cards-table tbody tr.selected:hover {
+    background: rgba(100, 108, 255, 0.15);
+  }
+
+  .library-option {
+    background: white;
+    border-color: #e0e0e0;
+  }
+
+  .library-option:hover:not(:disabled) {
+    background: rgba(100, 108, 255, 0.05);
+  }
+
+  .modal-description {
+    color: #666;
+  }
+
+  .library-info {
+    color: #666;
   }
 }
 

@@ -365,6 +365,7 @@
         "parameters": [
           {
             "name": "libraryId",
+            "description": "ID of the source library (from the URL path)",
             "in": "path",
             "required": true,
             "type": "string",
@@ -372,6 +373,7 @@
           },
           {
             "name": "cardId",
+            "description": "ID of the card to move (from the URL path)",
             "in": "path",
             "required": true,
             "type": "string",
@@ -487,7 +489,14 @@
       }
     },
     "CardServiceMoveCardBody": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "destinationLibraryId": {
+          "type": "string",
+          "format": "int64",
+          "description": "ID of the library to move the card to"
+        }
+      }
     },
     "CardServiceUpdateCardBody": {
       "type": "object",

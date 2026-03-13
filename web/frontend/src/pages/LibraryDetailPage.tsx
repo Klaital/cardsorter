@@ -16,14 +16,28 @@ export function LibraryDetailPage() {
   const [commentText, setCommentText] = useState<string>('');
   const [sortColumn, setSortColumn] = useState<string>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [allLibraries, setAllLibraries] = useState<v1Library[]>([]);
+  const [movingCards, setMovingCards] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (libraryId) {
       loadLibraryData();
+      loadAllLibraries();
     }
   }, [libraryId]);
+
+  const loadAllLibraries = async () => {
+    try {
+      const response = await LibraryServiceService.libraryServiceGetLibraries();
+      setAllLibraries(response.libraries || []);
+    } catch (err) {
+      console.error('Error loading libraries:', err);
+    }
+  };
 
   const loadLibraryData = async () => {
     if (!libraryId) return;
@@ -167,6 +181,54 @@ export function LibraryDetailPage() {
     return sortDirection === 'asc' ? ' ↑' : ' ↓';
   };
 
+  const toggleCardSelection = (cardId: string) => {
+    setSelectedCards(prev => {
+      const next = new Set(prev);
+      if (next.has(cardId)) {
+        next.delete(cardId);
+      } else {
+        next.add(cardId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedCards.size === cards.length) {
+      setSelectedCards(new Set());
+    } else {
+      setSelectedCards(new Set(cards.map(c => c.id || '')));
+    }
+  };
+
+  const handleMoveCards = async (destinationLibraryId: string) => {
+    if (!libraryId || selectedCards.size === 0) return;
+
+    try {
+      setMovingCards(true);
+      setError('');
+
+      // Move each selected card
+      await Promise.all(
+        Array.from(selectedCards).map(cardId =>
+          CardsService.cardServiceMoveCard(libraryId, cardId, {
+            destinationLibraryId: destinationLibraryId,
+          })
+        )
+      );
+
+      // Clear selection and reload
+      setSelectedCards(new Set());
+      setShowMoveModal(false);
+      await loadLibraryData();
+    } catch (err) {
+      console.error('Error moving cards:', err);
+      setError(err instanceof Error ? err.message : 'Failed to move cards');
+    } finally {
+      setMovingCards(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="page-container">
@@ -202,9 +264,19 @@ export function LibraryDetailPage() {
             <span>Total Value: {formatPrice(library.totalValue)}</span>
           </div>
         </div>
-        <button onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
+        <div className="header-actions">
+          {selectedCards.size > 0 && (
+            <button
+              onClick={() => setShowMoveModal(true)}
+              className="move-button"
+            >
+              Move {selectedCards.size} Card{selectedCards.size !== 1 ? 's' : ''}
+            </button>
+          )}
+          <button onClick={handleLogout} className="logout-button">
+            Logout
+          </button>
+        </div>
       </header>
 
       {error && <div className="error-message">{error}</div>}
@@ -218,6 +290,14 @@ export function LibraryDetailPage() {
           <table className="cards-table">
             <thead>
               <tr>
+                <th className="checkbox-column">
+                  <input
+                    type="checkbox"
+                    checked={selectedCards.size === cards.length && cards.length > 0}
+                    onChange={toggleSelectAll}
+                    title="Select all"
+                  />
+                </th>
                 <th onClick={() => handleSort('name')} className="sortable">
                   Name{getSortIndicator('name')}
                 </th>
@@ -256,7 +336,14 @@ export function LibraryDetailPage() {
                 const createdDate = card.createdAt ? new Date(card.createdAt) : null;
 
                 return (
-                  <tr key={card.id}>
+                  <tr key={card.id} className={selectedCards.has(card.id || '') ? 'selected' : ''}>
+                    <td className="checkbox-column">
+                      <input
+                        type="checkbox"
+                        checked={selectedCards.has(card.id || '')}
+                        onChange={() => toggleCardSelection(card.id || '')}
+                      />
+                    </td>
                     <td className="card-name">{card.name || 'Unknown'}</td>
                     <td>{card.setId || 'N/A'}</td>
                     <td>{card.collectorNumber || 'N/A'}</td>
@@ -335,6 +422,44 @@ export function LibraryDetailPage() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {showMoveModal && (
+        <div className="modal-overlay" onClick={() => !movingCards && setShowMoveModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Move {selectedCards.size} Card{selectedCards.size !== 1 ? 's' : ''}</h2>
+            <p className="modal-description">Select the destination library:</p>
+            <div className="library-list">
+              {allLibraries
+                .filter(lib => lib.id !== libraryId)
+                .map(lib => (
+                  <button
+                    key={lib.id}
+                    onClick={() => handleMoveCards(lib.id || '')}
+                    className="library-option"
+                    disabled={movingCards}
+                  >
+                    <span className="library-name">{lib.name}</span>
+                    <span className="library-info">
+                      {lib.cardCount || 0} cards
+                    </span>
+                  </button>
+                ))}
+            </div>
+            {allLibraries.filter(lib => lib.id !== libraryId).length === 0 && (
+              <p className="empty-state">No other libraries available</p>
+            )}
+            <div className="modal-actions">
+              <button
+                onClick={() => setShowMoveModal(false)}
+                className="cancel-button"
+                disabled={movingCards}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

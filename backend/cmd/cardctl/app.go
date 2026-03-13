@@ -108,7 +108,7 @@ func (a *App) AddCard(libraryID int64, set, number, condition string, foil bool)
 		cardName = scryfallCard.Name
 	}
 
-	_, err = a.q.CreateCard(a.ctx, db.CreateCardParams{
+	result, err := a.q.CreateCard(a.ctx, db.CreateCardParams{
 		LibraryID:       lib.ID,
 		SetName:         strings.ToUpper(set),
 		CollectorNum:    number,
@@ -117,11 +117,59 @@ func (a *App) AddCard(libraryID int64, set, number, condition string, foil bool)
 		Usd:             0,
 		Name:            cardName,
 		ScryfallCardID:  scryfallCardID,
+		Comment:         "",
 	})
+	if err != nil {
+		return err
+	}
 
-	// TODO: detect if card already exists, call IncrementCard()
+	// Get the card ID
+	cardID, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get card ID: %w", err)
+	}
 
-	return err
+	// Fetch the card back to display details
+	card, err := a.q.GetCard(a.ctx, cardID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch card details: %w", err)
+	}
+
+	// Print card details
+	displayName := card.Name
+	if card.ScryfallName.Valid && card.ScryfallName.String != "" {
+		displayName = card.ScryfallName.String
+	}
+
+	rarityStr := "N/A"
+	if card.Rarity.Valid {
+		rarityStr = card.Rarity.String
+	}
+
+	// Format price
+	priceStr := "$0.00"
+	if card.CurrentUsdPrice != nil {
+		if priceVal, ok := card.CurrentUsdPrice.(int32); ok {
+			priceStr = fmt.Sprintf("$%.2f", float64(priceVal)/100.0)
+		} else if priceVal, ok := card.CurrentUsdPrice.(int64); ok {
+			priceStr = fmt.Sprintf("$%.2f", float64(priceVal)/100.0)
+		}
+	}
+
+	foilMarker := ""
+	if card.Foil.Bool {
+		foilMarker = " (Foil)"
+	}
+
+	fmt.Printf("\nCard added successfully:\n")
+	fmt.Printf("  ID:      %d\n", card.ID)
+	fmt.Printf("  Name:    %s%s\n", displayName, foilMarker)
+	fmt.Printf("  Set:     %s #%s\n", card.SetName, card.CollectorNum)
+	fmt.Printf("  Rarity:  %s\n", rarityStr)
+	fmt.Printf("  Price:   %s\n", priceStr)
+	fmt.Printf("  Library: %s\n", lib.Name)
+
+	return nil
 }
 
 func (a *App) IncrementCard(cardID int64) error {
