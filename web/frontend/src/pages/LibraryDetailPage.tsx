@@ -142,6 +142,10 @@ export function LibraryDetailPage() {
           aVal = a.collectorNumber || '';
           bVal = b.collectorNumber || '';
           break;
+        case 'language':
+          aVal = a.language?.toLowerCase() || '';
+          bVal = b.language?.toLowerCase() || '';
+          break;
         case 'rarity':
           aVal = a.rarity?.toLowerCase() || '';
           bVal = b.rarity?.toLowerCase() || '';
@@ -307,6 +311,9 @@ export function LibraryDetailPage() {
                 <th onClick={() => handleSort('collector_number')} className="sortable">
                   Collector #{getSortIndicator('collector_number')}
                 </th>
+                <th onClick={() => handleSort('language')} className="sortable">
+                  Lang{getSortIndicator('language')}
+                </th>
                 <th onClick={() => handleSort('rarity')} className="sortable">
                   Rarity{getSortIndicator('rarity')}
                 </th>
@@ -347,6 +354,7 @@ export function LibraryDetailPage() {
                     <td className="card-name">{card.name || 'Unknown'}</td>
                     <td>{card.setId || 'N/A'}</td>
                     <td>{card.collectorNumber || 'N/A'}</td>
+                    <td className="language-cell">{card.language || 'EN'}</td>
                     <td>
                       <span className={`rarity rarity-${card.rarity?.toLowerCase()}`}>
                         {card.rarity || 'N/A'}

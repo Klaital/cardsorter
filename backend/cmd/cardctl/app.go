@@ -79,7 +79,7 @@ func (a *App) ListCards(libraryId int64) error {
 	return nil
 }
 
-func (a *App) AddCard(libraryID int64, set, number, condition string, foil bool) error {
+func (a *App) AddCard(libraryID int64, set, number, condition string, foil bool, language string) error {
 	lib, err := a.q.GetLibrary(a.ctx, db.GetLibraryParams{
 		ID:     libraryID,
 		UserID: a.currentUser.ID,
@@ -108,6 +108,9 @@ func (a *App) AddCard(libraryID int64, set, number, condition string, foil bool)
 		cardName = scryfallCard.Name
 	}
 
+	// Force language to uppercase
+	language = strings.ToUpper(language)
+
 	result, err := a.q.CreateCard(a.ctx, db.CreateCardParams{
 		LibraryID:       lib.ID,
 		SetName:         strings.ToUpper(set),
@@ -118,6 +121,7 @@ func (a *App) AddCard(libraryID int64, set, number, condition string, foil bool)
 		Name:            cardName,
 		ScryfallCardID:  scryfallCardID,
 		Comment:         "",
+		Language:        language,
 	})
 	if err != nil {
 		return err
@@ -162,12 +166,13 @@ func (a *App) AddCard(libraryID int64, set, number, condition string, foil bool)
 	}
 
 	fmt.Printf("\nCard added successfully:\n")
-	fmt.Printf("  ID:      %d\n", card.ID)
-	fmt.Printf("  Name:    %s%s\n", displayName, foilMarker)
-	fmt.Printf("  Set:     %s #%s\n", card.SetName, card.CollectorNum)
-	fmt.Printf("  Rarity:  %s\n", rarityStr)
-	fmt.Printf("  Price:   %s\n", priceStr)
-	fmt.Printf("  Library: %s\n", lib.Name)
+	fmt.Printf("  ID:       %d\n", card.ID)
+	fmt.Printf("  Name:     %s%s\n", displayName, foilMarker)
+	fmt.Printf("  Set:      %s #%s\n", card.SetName, card.CollectorNum)
+	fmt.Printf("  Language: %s\n", card.Language)
+	fmt.Printf("  Rarity:   %s\n", rarityStr)
+	fmt.Printf("  Price:    %s\n", priceStr)
+	fmt.Printf("  Library:  %s\n", lib.Name)
 
 	return nil
 }

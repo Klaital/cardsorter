@@ -35,6 +35,7 @@ type Card struct {
 	Qty            uint32        `json:"qty"`
 	ScryfallCardID sql.NullInt64 `json:"scryfall_card_id"`
 	Comment        string        `json:"comment"`
+	Language       string        `json:"language"`
 }
 
 type CardFace struct {

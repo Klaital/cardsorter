@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	pb "github.com/klaital/cardsorter/backend/gen/protos"
 	carddb "github.com/klaital/cardsorter/backend/internal/db"
 	"google.golang.org/grpc/codes"
@@ -42,6 +43,12 @@ func (s *CardServer) CreateCard(ctx context.Context, req *pb.CreateCardRequest) 
 		return nil, status.Error(codes.Internal, "failed to verify library ownership")
 	}
 
+	// Default language to 'EN' if not provided
+	language := req.Language
+	if language == "" {
+		language = "EN"
+	}
+
 	resp, err := queries.CreateCard(ctx, carddb.CreateCardParams{
 		LibraryID:    req.LibraryId,
 		Name:         req.Name,
@@ -51,6 +58,7 @@ func (s *CardServer) CreateCard(ctx context.Context, req *pb.CreateCardRequest) 
 		CollectorNum: req.CollectorNumber,
 		Usd:          req.UsdPrice,
 		Comment:      req.Comment,
+		Language:     strings.ToUpper(language),
 	})
 	if err != nil {
 		slog.Error("Failed to create card", "err", err.Error())
@@ -298,6 +306,7 @@ func toProtoCard(card carddb.GetCardRow) *pb.Card {
 		CurrentUsdPrice: price,
 		Qty:             int32(card.Qty),
 		Comment:         card.Comment,
+		Language:        card.Language,
 	}
 
 	// Add rarity if available
@@ -342,6 +351,7 @@ func toProtoCardFromCardsRow(card carddb.GetCardsRow) *pb.Card {
 		CurrentUsdPrice: price,
 		Qty:             int32(card.Qty),
 		Comment:         card.Comment,
+		Language:        card.Language,
 	}
 
 	// Add rarity if available

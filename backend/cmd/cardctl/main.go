@@ -47,10 +47,11 @@ type CardAddCmd struct {
 	Number    string `short:"n" help:"Collector number" required:""`
 	Condition string `short:"c" help:"Condition" default:"new"`
 	Foil      bool   `help:"Mark as foil"`
+	Language  string `help:"Language code (e.g. EN, JP, FR)" default:"EN"`
 }
 
 func (c *CardAddCmd) Run(a *App) error {
-	return a.AddCard(c.Library, c.Set, c.Number, c.Condition, c.Foil)
+	return a.AddCard(c.Library, c.Set, c.Number, c.Condition, c.Foil, c.Language)
 }
 
 type CardIncrementCmd struct {

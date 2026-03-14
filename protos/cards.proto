@@ -128,6 +128,9 @@ message Card {
   google.protobuf.Timestamp created_at = 13 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Timestamp when the card was added to the collection"
   }];
+  string language = 14 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Card language code (e.g., 'EN', 'JP', 'FR')"
+  }];
 }
 
 message CreateCardRequest {
@@ -139,6 +142,9 @@ message CreateCardRequest {
   string collector_number = 6;
   int32 usd_price = 7;
   string comment = 8;
+  string language = 9 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Card language code (e.g., 'EN', 'JP', 'FR'), defaults to 'EN'"
+  }];
 }
 
 message CreateCardResponse {

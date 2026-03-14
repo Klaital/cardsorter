@@ -216,6 +216,13 @@
   font-size: 0.9rem;
 }
 
+.language-cell {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #888;
+  text-align: center;
+}
+
 .header-actions {
   display: flex;
   gap: 1rem;
@@ -377,6 +384,10 @@
   }
 
   .date-cell {
+    color: #666;
+  }
+
+  .language-cell {
     color: #666;
   }
 

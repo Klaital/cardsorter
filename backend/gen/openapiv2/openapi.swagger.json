@@ -485,6 +485,10 @@
         },
         "comment": {
           "type": "string"
+        },
+        "language": {
+          "type": "string",
+          "description": "Card language code (e.g., 'EN', 'JP', 'FR'), defaults to 'EN'"
         }
       }
     },
@@ -588,6 +592,10 @@
           "type": "string",
           "format": "date-time",
           "description": "Timestamp when the card was added to the collection"
+        },
+        "language": {
+          "type": "string",
+          "description": "Card language code (e.g., 'EN', 'JP', 'FR')"
         }
       }
     },
